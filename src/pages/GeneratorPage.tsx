@@ -152,7 +152,7 @@ const GeneratorPage = () => {
         image_url: asset.imageDataUrl,
         style_modifiers: asset.styleModifiers,
         generation_mode: asset.generationMode,
-      } as any);
+      });
 
       if (error) throw error;
       toast.success('ARTIFACT SAVED TO VAULT.');
