@@ -114,17 +114,17 @@ export const SCENE_PIECES: ScenePiece[] = [
   {
     label: 'Portrait',
     assetType: 'character',
-    promptSuffix: 'character portrait, intense eye contact, cinematic torchlight warm key light with cold rift glow rim light, 35mm, shallow depth of field, clean readable composition, subject centered, high detail materials',
+    promptSuffix: 'character portrait, shoulders squared, direct gaze, slight low angle, cinematic torchlight warm key light with slightly brighter cyan-blue rim light, 35mm, shallow depth of field, clean readable composition, subject centered, high contrast value grouping, readable silhouette at small size, simplified midtones, clean shape massing',
   },
   {
     label: 'Props',
     assetType: 'item',
-    promptSuffix: 'still-life props close-up on a surface, 85mm macro lens, 3/4 top-down angle, sharp focus, props clearly separated, product-photography realism, high detail textures (linen, leather, iron, parchment)',
+    promptSuffix: 'still-life props close-up on a surface, 85mm macro lens, 3/4 top-down angle, sharp focus, props clearly separated, product-photography realism, high detail textures (linen, leather, iron, parchment), strong value separation between each prop, clean shapes',
   },
   {
     label: 'Background',
     assetType: 'environment',
-    promptSuffix: 'interior background plate, cinematic wide establishing shot, rule-of-thirds framing, readable silhouettes, atmospheric depth, empty negative space for UI overlay',
+    promptSuffix: 'interior background plate, cinematic wide establishing shot, rule-of-thirds framing, readable silhouettes, atmospheric depth, empty negative space for UI overlay, clear tonal bands between foreground/midground/background, simplified detail in distant areas',
   },
 ];
 

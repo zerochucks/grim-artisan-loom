@@ -18,46 +18,56 @@ function buildPrompt(
   const isSquare = height === width;
   const aspectHint = isSquare ? "1:1 square" : isPortrait ? "portrait aspect" : "landscape aspect";
 
+  // Sprite-size safeguards: bolted onto every asset type
+  const isSmallSprite = width <= 64 || height <= 64;
+  const spriteSafeguards = isSmallSprite
+    ? "high contrast value grouping, readable silhouette at small size, simplified midtones, clean shape massing over micro-texture, avoid dithering noise at downscale, group values into 3-4 clear tonal bands"
+    : "high detail materials, readable silhouette, strong value separation";
+
+  const rimLightNote = isSmallSprite
+    ? "slightly brighter rim light (saturated cyan-blue, not neon), ensure rim reads at small size"
+    : "cold rift glow rim light";
+
   // Asset-type specific prompt templates with photography-style framing
   const templates: Record<string, { subject: string; framing: string; negatives: string }> = {
     character: {
-      subject: `${prompt}, morally-gray low-fantasy world, gritty realism`,
-      framing: "cinematic torchlight warm key light with cold rift glow rim light, 35mm, shallow depth of field, clean readable composition, subject centered, high detail materials (worn leather, oiled steel, weathered fabric)",
-      negatives: "no anime, no cartoon, no chibi, no extra limbs, no deformed hands, no blurred face, no modern clothing, no sci-fi, no neon, no text, no watermark, no background scenery, no clutter",
+      subject: `${prompt}, morally-gray low-fantasy world, gritty realism, shoulders squared, direct gaze, slight low angle`,
+      framing: `cinematic torchlight warm key light with ${rimLightNote}, 35mm, shallow depth of field, clean readable composition, subject centered, ${spriteSafeguards}, high detail materials (worn leather, oiled steel, weathered fabric)`,
+      negatives: "no anime, no cartoon, no chibi, no extra limbs, no deformed hands, no blurred face, no modern clothing, no sci-fi, no neon, no text, no watermark, no background scenery, no clutter, no sparkly dithering, no noisy micro-texture",
     },
     equipment: {
       subject: `${prompt}, product-photography style, single item on dark surface`,
-      framing: "studio lighting with warm key and cold fill, macro lens, sharp focus on material detail, high detail textures (worn leather, oiled steel, iron, parchment), clean dark background",
-      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no cartoon",
+      framing: `studio lighting with warm key and cold fill, macro lens, sharp focus on material detail, ${spriteSafeguards}, high detail textures (worn leather, oiled steel, iron, parchment), clean dark background`,
+      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no cartoon, no noisy dithering",
     },
     icon: {
       subject: `${prompt}, ability icon design, centered composition`,
-      framing: "flat dramatic lighting, clean circular or square vignette, bold readable silhouette, high contrast, graphic clarity at small sizes",
-      negatives: "no 3D perspective, no characters, no text, no watermark, no complex background, no blur, no anime",
+      framing: `flat dramatic lighting, clean circular or square vignette, bold readable silhouette, high contrast, graphic clarity at small sizes, ${spriteSafeguards}`,
+      negatives: "no 3D perspective, no characters, no text, no watermark, no complex background, no blur, no anime, no noisy micro-texture",
     },
     item: {
       subject: `still-life close-up: ${prompt}, placed on a wooden surface`,
-      framing: "product-photography realism, torchlight + cold rift glow accents, sharp focus, props clearly separated, high detail textures (linen, leather, iron, parchment, glass)",
-      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime",
+      framing: `product-photography realism, torchlight + cold rift glow accents, sharp focus, props clearly separated, ${spriteSafeguards}, high detail textures (linen, leather, iron, parchment, glass)`,
+      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no noisy dithering",
     },
     environment: {
       subject: `${prompt}, low-fantasy interior or exterior detail`,
-      framing: "cinematic wide or medium shot, warm torchlight, subtle cold rift glow, clear silhouette shapes, atmospheric depth, gritty realism",
-      negatives: "no characters, no readable text, no modern signage, no neon, no fisheye distortion, no extreme clutter, no anime",
+      framing: `cinematic wide or medium shot, warm torchlight, subtle cold rift glow, clear silhouette shapes, atmospheric depth, gritty realism, ${spriteSafeguards}`,
+      negatives: "no characters, no readable text, no modern signage, no neon, no fisheye distortion, no extreme clutter, no anime, no noisy micro-texture",
     },
     tileset: {
       subject: `${prompt}, seamless tileable pattern, top-down or front-facing view`,
-      framing: "flat even lighting, consistent texture density, clean edges for tiling, high detail surface textures",
+      framing: `flat even lighting, consistent texture density, clean edges for tiling, ${spriteSafeguards}`,
       negatives: "no perspective distortion, no characters, no text, no watermark, no 3D depth, no anime",
     },
     ui: {
       subject: `${prompt}, gothic UI frame or panel element`,
-      framing: "flat front-facing view, ornate iron/stone detail, clean interior space, symmetric composition, dark background",
+      framing: `flat front-facing view, ornate iron/stone detail, clean interior space, symmetric composition, dark background, ${spriteSafeguards}`,
       negatives: "no characters, no readable text, no modern design, no rounded corners, no blur, no anime, no 3D perspective",
     },
     effect: {
       subject: `${prompt}, VFX particle or impact effect`,
-      framing: "isolated on dark/transparent background, dynamic motion trail, high contrast glow, clean readable shape at small sizes",
+      framing: `isolated on dark/transparent background, dynamic motion trail, high contrast glow, clean readable shape at small sizes, ${spriteSafeguards}`,
       negatives: "no characters, no text, no watermark, no background scenery, no blur, no anime",
     },
   };
@@ -82,6 +92,8 @@ Visual execution:
 - Warm gold highlights on light-facing edges
 - Gritty, textured, atmospheric feel
 - Strong readable silhouette
+- Value separation: ensure coat/armor, shirt/skin, and background occupy clearly distinct tonal bands
+- Avoid compressing midtones into a single mass — keep at least 3 distinct value steps in the main subject
 
 Negative constraints:
 - ${template.negatives}`;
