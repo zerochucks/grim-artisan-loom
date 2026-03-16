@@ -106,20 +106,27 @@ export function base64ToCanvas(base64: string): Promise<HTMLCanvasElement> {
 }
 
 /**
- * Post-process a rendered image: downscale + quantize.
+ * Post-process a rendered image: downscale + optional quantize.
+ * When skipQuantize is true, only downscale without palette quantization
+ * to preserve the AI-generated color quality.
  */
 export async function postProcessRender(
   base64Image: string,
   targetW: number,
   targetH: number,
-  paletteColors: string[]
+  paletteColors: string[],
+  skipQuantize: boolean = false
 ): Promise<string> {
   const srcCanvas = await base64ToCanvas(base64Image);
   const downscaled = downscaleNearestNeighbor(srcCanvas, targetW, targetH);
-  const ctx = downscaled.getContext('2d')!;
-  const imageData = ctx.getImageData(0, 0, targetW, targetH);
-  const quantized = quantizeToPalette(imageData, paletteColors);
-  ctx.putImageData(quantized, 0, 0);
+
+  if (!skipQuantize) {
+    const ctx = downscaled.getContext('2d')!;
+    const imageData = ctx.getImageData(0, 0, targetW, targetH);
+    const quantized = quantizeToPalette(imageData, paletteColors);
+    ctx.putImageData(quantized, 0, 0);
+  }
+
   return downscaled.toDataURL('image/png');
 }
 
