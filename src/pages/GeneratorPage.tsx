@@ -93,17 +93,20 @@ const GeneratorPage = () => {
               height,
               paletteDescription: `${selectedPalette.name} palette: ${selectedPalette.colors.join(', ')}`,
               styleModifiers: modifiers,
+              skipQuantize: true,
             },
           });
 
           if (error) throw new Error(error.message || 'Generation failed');
           if (data?.error) throw new Error(data.error);
 
+          const shouldSkipQuantize = data.skipQuantize ?? true;
           const imageDataUrl = await postProcessRender(
             data.image,
             width,
             height,
-            selectedPalette.colors
+            selectedPalette.colors,
+            shouldSkipQuantize
           );
 
           newAssets.push({
