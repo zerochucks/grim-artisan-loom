@@ -187,7 +187,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, assetType, width, height, paletteDescription, styleModifiers, skipQuantize } = await req.json();
+    const { prompt, assetType, width, height, paletteDescription, styleModifiers, skipQuantize, referenceImage } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -196,6 +196,14 @@ serve(async (req) => {
     const imagePrompt = buildPrompt(prompt, assetType, width, height, paletteDescription || "", modifierText);
 
     console.log("Render prompt (first 300 chars):", imagePrompt.substring(0, 300));
+
+    // Build message content — text-only or multimodal with reference image
+    const messageContent: any = referenceImage
+      ? [
+          { type: "text", text: imagePrompt + "\n\nIMPORTANT: Use the attached reference image as a STYLE GUIDE. Match its color palette, lighting style, level of detail, and overall aesthetic. The new image should look like it belongs in the same game/set as the reference." },
+          { type: "image_url", image_url: { url: referenceImage } },
+        ]
+      : imagePrompt;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -206,7 +214,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-pro-image-preview",
         messages: [
-          { role: "user", content: imagePrompt },
+          { role: "user", content: messageContent },
         ],
         modalities: ["image", "text"],
       }),

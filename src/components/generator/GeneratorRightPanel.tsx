@@ -81,6 +81,10 @@ export function GeneratorRightPanel({ currentAssets, sessionHistory }: Generator
               📋 Metadata JSON
             </Button>
           </div>
+          {/* Scene Compositor */}
+          {currentAssets.some(a => a.scenePiece) && (
+            <SceneCompositor assets={currentAssets.filter(a => a.scenePiece)} />
+          )}
         </Section>
 
         {/* Brand Guidelines */}
