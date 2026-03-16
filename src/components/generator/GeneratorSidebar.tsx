@@ -42,8 +42,8 @@ interface GeneratorSidebarProps {
   onModifiersChange: (v: StyleModifierId[]) => void;
   variationCount: number;
   onVariationCountChange: (v: number) => void;
-  generationMode: 'forge' | 'render';
-  onGenerationModeChange: (v: 'forge' | 'render') => void;
+  generationMode: 'forge' | 'render' | 'scene';
+  onGenerationModeChange: (v: 'forge' | 'render' | 'scene') => void;
 }
 
 export function GeneratorSidebar({
