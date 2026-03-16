@@ -16,22 +16,34 @@ serve(async (req) => {
 
     const modifierText = (styleModifiers || []).join(", ");
 
-    const imagePrompt = `Pixel art game sprite of: ${prompt}
+    const imagePrompt = `Create a single pixel art game sprite.
 
-Style: Dark fantasy grimdark pixel art, inspired by Stoneshard and Darkest Dungeon.
-Asset type: ${assetType}
-Target resolution: ${width}x${height} pixels
-${paletteDescription ? `Color palette: ${paletteDescription}` : ""}
-${modifierText ? `Style modifiers: ${modifierText}` : ""}
+Subject: ${prompt}
 
-Requirements:
-- Clean pixel art with no anti-aliasing
-- Centered on transparent/dark background
-- Strong silhouette and readable at small sizes
-- Gritty, textured, atmospheric
-- Muted earth tones with sparse warm accents
-- Hue-shifted shadows (purple/blue shadows, warm gold highlights)
-- Game-ready asset, single subject, no text or UI`;
+Style direction:
+- Dark fantasy grimdark pixel art, inspired by Stoneshard and Darkest Dungeon
+- Asset type: ${assetType}
+- Target pixel resolution: ${width}x${height}
+${paletteDescription ? `- Color palette: ${paletteDescription}` : ""}
+${modifierText ? `- Style modifiers: ${modifierText}` : ""}
+
+Art requirements:
+- Clean hand-placed pixel art with NO anti-aliasing
+- Centered single subject on a dark or transparent background
+- Strong readable silhouette at small sizes
+- Gritty, textured, atmospheric feel
+- Muted earth tones with sparse warm accents (reds, golds)
+- Hue-shifted shadows (purple/blue undertones in dark areas)
+- Warm gold highlights on light-facing edges
+- Game-ready sprite asset
+
+Negative constraints:
+- No text, no UI elements, no watermarks
+- No anime or cartoon style
+- No extra limbs or deformed anatomy
+- No modern objects or sci-fi elements
+- No blurry or soft edges — crisp pixels only
+- Single subject only, no background scenery`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -40,10 +52,11 @@ Requirements:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           { role: "user", content: imagePrompt },
         ],
+        modalities: ["image", "text"],
       }),
     });
 
@@ -69,7 +82,7 @@ Requirements:
 
     const data = await response.json();
     
-    // Extract image from response - check all known formats
+    // Extract image from response
     const msg = data.choices?.[0]?.message;
     const content = msg?.content;
     let imageBase64 = "";
