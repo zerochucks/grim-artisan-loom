@@ -3,6 +3,7 @@ import type { GeneratedAsset } from '@/lib/forge-constants';
 import { downloadPNG, exportZip, createSpritesheetAsync, generateMetadataJSON } from '@/lib/export-utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { SceneCompositor } from './SceneCompositor';
 
 interface GeneratorRightPanelProps {
   currentAssets: GeneratedAsset[];
