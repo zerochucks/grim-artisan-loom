@@ -69,20 +69,32 @@ Requirements:
 
     const data = await response.json();
     
-    // Extract image from response - Gemini image models return base64 inline
-    const content = data.choices?.[0]?.message?.content;
+    // Extract image from response - check all known formats
+    const msg = data.choices?.[0]?.message;
+    const content = msg?.content;
     let imageBase64 = "";
 
-    if (typeof content === "string") {
-      // If content is a base64 string directly
+    // 1. Check message.images[] (Gemini image model format)
+    if (Array.isArray(msg?.images)) {
+      for (const img of msg.images) {
+        if (img.type === "image_url" && img.image_url?.url) {
+          imageBase64 = img.image_url.url;
+          break;
+        }
+      }
+    }
+
+    // 2. Check content as string
+    if (!imageBase64 && typeof content === "string") {
       if (content.startsWith("data:image")) {
         imageBase64 = content;
       } else if (content.length > 100 && !content.includes(" ")) {
-        // Likely raw base64
         imageBase64 = `data:image/png;base64,${content}`;
       }
-    } else if (Array.isArray(content)) {
-      // Multi-part content with image
+    }
+
+    // 3. Check content as array (multi-part)
+    if (!imageBase64 && Array.isArray(content)) {
       for (const part of content) {
         if (part.type === "image_url") {
           imageBase64 = part.image_url?.url || "";
@@ -95,8 +107,8 @@ Requirements:
       }
     }
 
-    // Also check for inline_data in parts (Gemini format)
-    const parts = data.choices?.[0]?.message?.parts;
+    // 4. Check message.parts[] (inline_data format)
+    const parts = msg?.parts;
     if (!imageBase64 && Array.isArray(parts)) {
       for (const part of parts) {
         if (part.inline_data) {
