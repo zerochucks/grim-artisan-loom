@@ -14,7 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          generation_mode: string
+          grid_data: Json | null
+          height: number
+          id: string
+          image_url: string | null
+          name: string
+          palette_id: string | null
+          prompt: string
+          style_modifiers: string[] | null
+          user_id: string
+          width: number
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          generation_mode?: string
+          grid_data?: Json | null
+          height: number
+          id?: string
+          image_url?: string | null
+          name: string
+          palette_id?: string | null
+          prompt: string
+          style_modifiers?: string[] | null
+          user_id: string
+          width: number
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          generation_mode?: string
+          grid_data?: Json | null
+          height?: number
+          id?: string
+          image_url?: string | null
+          name?: string
+          palette_id?: string | null
+          prompt?: string
+          style_modifiers?: string[] | null
+          user_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_palette_id_fkey"
+            columns: ["palette_id"]
+            isOneToOne: false
+            referencedRelation: "palettes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      palettes: {
+        Row: {
+          colors: string[]
+          created_at: string
+          description: string | null
+          id: string
+          is_builtin: boolean
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          colors: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_builtin?: boolean
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          colors?: string[]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_builtin?: boolean
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          default_palette_id: string | null
+          default_resolution_h: number | null
+          default_resolution_w: number | null
+          description: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_palette_id?: string | null
+          default_resolution_h?: number | null
+          default_resolution_w?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_palette_id?: string | null
+          default_resolution_h?: number | null
+          default_resolution_w?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_default_palette_id_fkey"
+            columns: ["default_palette_id"]
+            isOneToOne: false
+            referencedRelation: "palettes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
