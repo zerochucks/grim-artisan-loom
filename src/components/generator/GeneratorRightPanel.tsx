@@ -82,6 +82,51 @@ export function GeneratorRightPanel({ currentAssets, sessionHistory }: Generator
           </div>
         </Section>
 
+        {/* Brand Guidelines */}
+        <Section title="BRAND GUIDELINES">
+          <div className="space-y-2 text-[10px] text-muted-foreground font-body">
+            <div>
+              <p className="text-accent mb-0.5">Art Direction:</p>
+              <p>Grimdark low-fantasy, morally-gray, gritty, weathered</p>
+            </div>
+            <div>
+              <p className="text-accent mb-0.5">References:</p>
+              <p>Stoneshard, Darkest Dungeon, Kingdom Death</p>
+            </div>
+          </div>
+        </Section>
+
+        {/* Lighting Signature */}
+        <Section title="LIGHTING SIGNATURE">
+          <div className="space-y-1.5 text-[10px] text-muted-foreground font-body">
+            <p><span className="text-accent">Key:</span> Warm torchlight, upper-left</p>
+            <p><span className="text-accent">Rim:</span> Cyan-blue, ONE edge (right)</p>
+            <p><span className="text-accent">Shadows:</span> Hue-shifted purple/blue</p>
+            <p><span className="text-accent">Rule:</span> No patchy outlines</p>
+          </div>
+        </Section>
+
+        {/* Value Structure */}
+        <Section title="VALUE RULES">
+          <div className="space-y-1.5 text-[10px] text-muted-foreground font-body">
+            <p><span className="text-accent">≤64px:</span> 4+ tonal bands, force torso breaks</p>
+            <p><span className="text-accent">≤128px:</span> Clear form shapes, moderate detail</p>
+            <p><span className="text-accent">Larger:</span> Full detail, maintain silhouette</p>
+            <p className="text-primary/80 mt-1">⚠ Torso must never collapse into single mass</p>
+          </div>
+        </Section>
+
+        {/* Color Direction */}
+        <Section title="COLOR DIRECTION">
+          <div className="space-y-1 text-[10px] text-muted-foreground font-body">
+            <p>Muted earth tones base</p>
+            <p>Warm accents (red/gold) — sparingly</p>
+            <p>Purple/blue shadow shifts</p>
+            <p>Gold/amber highlights</p>
+            <p>Low saturation, strategic pops</p>
+          </div>
+        </Section>
+
         {/* Unity Reference */}
         <Section title="UNITY IMPORT">
           <div className="space-y-2 text-[10px] text-muted-foreground font-body">
@@ -90,20 +135,12 @@ export function GeneratorRightPanel({ currentAssets, sessionHistory }: Generator
               <p>Sprite (2D and UI)</p>
             </div>
             <div>
-              <p className="text-accent mb-0.5">Pixels Per Unit:</p>
-              <p>Match resolution width</p>
-            </div>
-            <div>
               <p className="text-accent mb-0.5">Filter Mode:</p>
               <p>Point (no filter)</p>
             </div>
             <div>
               <p className="text-accent mb-0.5">Compression:</p>
               <p>None</p>
-            </div>
-            <div>
-              <p className="text-accent mb-0.5">Max Size:</p>
-              <p>256 or higher</p>
             </div>
           </div>
         </Section>
@@ -120,21 +157,6 @@ export function GeneratorRightPanel({ currentAssets, sessionHistory }: Generator
             <p>fx_ — Effects</p>
             <p>ui_ — UI elements</p>
           </div>
-        </Section>
-
-        {/* Folder Structure */}
-        <Section title="FOLDER STRUCTURE">
-          <pre className="text-[9px] text-muted-foreground font-body leading-relaxed">
-{`Assets/Sprites/
-  Characters/
-  Equipment/
-  Icons/
-  Tiles/
-  Items/
-  Props/
-  Effects/
-  UI/`}
-          </pre>
         </Section>
       </div>
     </div>
