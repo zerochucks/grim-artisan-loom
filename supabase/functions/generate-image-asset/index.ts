@@ -5,45 +5,101 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function buildPrompt(
+  prompt: string,
+  assetType: string,
+  width: number,
+  height: number,
+  paletteDescription: string,
+  modifierText: string
+): string {
+  // Determine aspect descriptor for framing cues
+  const isPortrait = height > width;
+  const isSquare = height === width;
+  const aspectHint = isSquare ? "1:1 square" : isPortrait ? "portrait aspect" : "landscape aspect";
+
+  // Asset-type specific prompt templates with photography-style framing
+  const templates: Record<string, { subject: string; framing: string; negatives: string }> = {
+    character: {
+      subject: `${prompt}, morally-gray low-fantasy world, gritty realism`,
+      framing: "cinematic torchlight warm key light with cold rift glow rim light, 35mm, shallow depth of field, clean readable composition, subject centered, high detail materials (worn leather, oiled steel, weathered fabric)",
+      negatives: "no anime, no cartoon, no chibi, no extra limbs, no deformed hands, no blurred face, no modern clothing, no sci-fi, no neon, no text, no watermark, no background scenery, no clutter",
+    },
+    equipment: {
+      subject: `${prompt}, product-photography style, single item on dark surface`,
+      framing: "studio lighting with warm key and cold fill, macro lens, sharp focus on material detail, high detail textures (worn leather, oiled steel, iron, parchment), clean dark background",
+      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no cartoon",
+    },
+    icon: {
+      subject: `${prompt}, ability icon design, centered composition`,
+      framing: "flat dramatic lighting, clean circular or square vignette, bold readable silhouette, high contrast, graphic clarity at small sizes",
+      negatives: "no 3D perspective, no characters, no text, no watermark, no complex background, no blur, no anime",
+    },
+    item: {
+      subject: `still-life close-up: ${prompt}, placed on a wooden surface`,
+      framing: "product-photography realism, torchlight + cold rift glow accents, sharp focus, props clearly separated, high detail textures (linen, leather, iron, parchment, glass)",
+      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime",
+    },
+    environment: {
+      subject: `${prompt}, low-fantasy interior or exterior detail`,
+      framing: "cinematic wide or medium shot, warm torchlight, subtle cold rift glow, clear silhouette shapes, atmospheric depth, gritty realism",
+      negatives: "no characters, no readable text, no modern signage, no neon, no fisheye distortion, no extreme clutter, no anime",
+    },
+    tileset: {
+      subject: `${prompt}, seamless tileable pattern, top-down or front-facing view`,
+      framing: "flat even lighting, consistent texture density, clean edges for tiling, high detail surface textures",
+      negatives: "no perspective distortion, no characters, no text, no watermark, no 3D depth, no anime",
+    },
+    ui: {
+      subject: `${prompt}, gothic UI frame or panel element`,
+      framing: "flat front-facing view, ornate iron/stone detail, clean interior space, symmetric composition, dark background",
+      negatives: "no characters, no readable text, no modern design, no rounded corners, no blur, no anime, no 3D perspective",
+    },
+    effect: {
+      subject: `${prompt}, VFX particle or impact effect`,
+      framing: "isolated on dark/transparent background, dynamic motion trail, high contrast glow, clean readable shape at small sizes",
+      negatives: "no characters, no text, no watermark, no background scenery, no blur, no anime",
+    },
+  };
+
+  const template = templates[assetType] || templates.character;
+
+  return `Generate a single high-quality game art asset image.
+
+Subject: ${template.subject}
+
+Style direction:
+- Dark fantasy grimdark art inspired by Stoneshard and Darkest Dungeon
+- Asset type: ${assetType}
+- ${aspectHint} composition, render at high resolution for downscaling to ${width}x${height}
+${paletteDescription ? `- Color direction: ${paletteDescription}` : ""}
+${modifierText ? `- Style modifiers: ${modifierText}` : ""}
+
+Visual execution:
+- ${template.framing}
+- Muted earth tones with sparse warm accents (reds, golds)
+- Hue-shifted shadows (purple/blue undertones in dark areas)
+- Warm gold highlights on light-facing edges
+- Gritty, textured, atmospheric feel
+- Strong readable silhouette
+
+Negative constraints:
+- ${template.negatives}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, assetType, width, height, paletteDescription, styleModifiers } = await req.json();
+    const { prompt, assetType, width, height, paletteDescription, styleModifiers, skipQuantize } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const modifierText = (styleModifiers || []).join(", ");
+    const imagePrompt = buildPrompt(prompt, assetType, width, height, paletteDescription || "", modifierText);
 
-    const imagePrompt = `Create a single pixel art game sprite.
-
-Subject: ${prompt}
-
-Style direction:
-- Dark fantasy grimdark pixel art, inspired by Stoneshard and Darkest Dungeon
-- Asset type: ${assetType}
-- Target pixel resolution: ${width}x${height}
-${paletteDescription ? `- Color palette: ${paletteDescription}` : ""}
-${modifierText ? `- Style modifiers: ${modifierText}` : ""}
-
-Art requirements:
-- Clean hand-placed pixel art with NO anti-aliasing
-- Centered single subject on a dark or transparent background
-- Strong readable silhouette at small sizes
-- Gritty, textured, atmospheric feel
-- Muted earth tones with sparse warm accents (reds, golds)
-- Hue-shifted shadows (purple/blue undertones in dark areas)
-- Warm gold highlights on light-facing edges
-- Game-ready sprite asset
-
-Negative constraints:
-- No text, no UI elements, no watermarks
-- No anime or cartoon style
-- No extra limbs or deformed anatomy
-- No modern objects or sci-fi elements
-- No blurry or soft edges — crisp pixels only
-- Single subject only, no background scenery`;
+    console.log("Render prompt:", imagePrompt.substring(0, 200));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -82,12 +138,11 @@ Negative constraints:
 
     const data = await response.json();
     
-    // Extract image from response
     const msg = data.choices?.[0]?.message;
     const content = msg?.content;
     let imageBase64 = "";
 
-    // 1. Check message.images[] (Gemini image model format)
+    // 1. Check message.images[]
     if (Array.isArray(msg?.images)) {
       for (const img of msg.images) {
         if (img.type === "image_url" && img.image_url?.url) {
@@ -120,7 +175,7 @@ Negative constraints:
       }
     }
 
-    // 4. Check message.parts[] (inline_data format)
+    // 4. Check message.parts[]
     const parts = msg?.parts;
     if (!imageBase64 && Array.isArray(parts)) {
       for (const part of parts) {
@@ -139,7 +194,7 @@ Negative constraints:
       });
     }
 
-    return new Response(JSON.stringify({ image: imageBase64 }), {
+    return new Response(JSON.stringify({ image: imageBase64, skipQuantize: skipQuantize ?? true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
