@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ASSET_TYPES, BUILT_IN_PALETTES, STYLE_MODIFIERS, RESOLUTION_PRESETS,
   type AssetTypeId, type StyleModifierId,
 } from '@/lib/forge-constants';
+import { ANIMATION_PRESETS } from '@/lib/animation-presets';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,6 @@ interface StyleRecipe {
   isBuiltin: boolean;
 }
 
-// Built-in recipes
 const BUILTIN_RECIPES: Omit<StyleRecipe, 'id'>[] = [
   { name: 'Stoneshard Bandit', description: 'Earthy detailed characters', modifiers: ['thin_outline', 'hue_shifted', 'textured', 'warm_lighting'], isBuiltin: true },
   { name: 'Darkest Icon', description: 'Dense painterly skill icons', modifiers: ['heavy_outline', 'high_detail', 'symmetry', 'blood_gore'], isBuiltin: true },
@@ -29,7 +29,7 @@ const BUILTIN_RECIPES: Omit<StyleRecipe, 'id'>[] = [
   { name: 'Blood & Iron', description: 'Warfare equipment, gritty', modifiers: ['heavy_outline', 'high_detail', 'textured', 'warm_lighting', 'blood_gore'], isBuiltin: true },
 ];
 
-interface GeneratorSidebarProps {
+export interface GeneratorSidebarProps {
   assetType: AssetTypeId;
   onAssetTypeChange: (v: AssetTypeId) => void;
   width: number;
@@ -44,6 +44,11 @@ interface GeneratorSidebarProps {
   onVariationCountChange: (v: number) => void;
   generationMode: 'forge' | 'render' | 'scene';
   onGenerationModeChange: (v: 'forge' | 'render' | 'scene') => void;
+  animationPreset: string | null;
+  onAnimationPresetChange: (v: string | null) => void;
+  referenceImage: string | null;
+  onReferenceUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClearReference: () => void;
 }
 
 export function GeneratorSidebar({
@@ -53,12 +58,15 @@ export function GeneratorSidebar({
   modifiers, onModifiersChange,
   variationCount, onVariationCountChange,
   generationMode, onGenerationModeChange,
+  animationPreset, onAnimationPresetChange,
+  referenceImage, onReferenceUpload, onClearReference,
 }: GeneratorSidebarProps) {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<StyleRecipe[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [recipeName, setRecipeName] = useState('');
   const [recipeDesc, setRecipeDesc] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchRecipes = useCallback(async () => {
     if (!user) return;
@@ -118,6 +126,8 @@ export function GeneratorSidebar({
     toast.success('RECIPE DESTROYED.');
     fetchRecipes();
   };
+
+  const applicableAnimations = ANIMATION_PRESETS.filter(p => p.assetTypes.includes(assetType));
 
   return (
     <div className="w-[260px] border-r border-border bg-card overflow-y-auto flex-shrink-0">
@@ -191,6 +201,37 @@ export function GeneratorSidebar({
               </button>
             ))}
           </div>
+        </Section>
+
+        {/* Reference Image */}
+        <Section title="REFERENCE IMAGE">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={onReferenceUpload}
+          />
+          {referenceImage ? (
+            <div className="space-y-1">
+              <div className="border border-accent p-1">
+                <img src={referenceImage} alt="Reference" className="w-full h-auto pixel-render max-h-[80px] object-contain" />
+              </div>
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="flex-1 text-[10px] h-6">
+                  REPLACE
+                </Button>
+                <Button size="sm" variant="outline" onClick={onClearReference} className="text-[10px] h-6 px-2">
+                  ✕
+                </Button>
+              </div>
+              <p className="text-[9px] text-muted-foreground">AI will use this as style reference for consistency.</p>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full text-[10px] h-7">
+              📌 UPLOAD REFERENCE
+            </Button>
+          )}
         </Section>
 
         {/* Style Recipes */}
@@ -301,6 +342,37 @@ export function GeneratorSidebar({
               : 'Generates portrait + props + background as 3 separate assets.'}
           </p>
         </Section>
+
+        {/* Animation */}
+        {applicableAnimations.length > 0 && (
+          <Section title="ANIMATION">
+            <div className="space-y-1">
+              <button
+                onClick={() => onAnimationPresetChange(null)}
+                className={`w-full text-left text-[11px] font-body px-2 py-1.5 border transition-colors ${
+                  !animationPreset ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:border-accent'
+                }`}
+              >
+                🚫 No Animation (single frame)
+              </button>
+              {applicableAnimations.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onAnimationPresetChange(p.id)}
+                  className={`w-full text-left px-2 py-1.5 border transition-colors ${
+                    animationPreset === p.id ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:border-accent'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-body">{p.icon} {p.label}</span>
+                    <span className="text-[9px] text-accent">{p.frameCount}F</span>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground">{p.description}</p>
+                </button>
+              ))}
+            </div>
+          </Section>
+        )}
       </div>
 
       {/* Save Recipe Dialog */}

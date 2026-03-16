@@ -3,6 +3,7 @@ import type { GeneratedAsset } from '@/lib/forge-constants';
 import { downloadPNG, exportZip, createSpritesheetAsync, generateMetadataJSON } from '@/lib/export-utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { SceneCompositor } from './SceneCompositor';
 
 interface GeneratorRightPanelProps {
   currentAssets: GeneratedAsset[];
@@ -80,6 +81,10 @@ export function GeneratorRightPanel({ currentAssets, sessionHistory }: Generator
               📋 Metadata JSON
             </Button>
           </div>
+          {/* Scene Compositor */}
+          {currentAssets.some(a => a.scenePiece) && (
+            <SceneCompositor assets={currentAssets.filter(a => a.scenePiece)} />
+          )}
         </Section>
 
         {/* Brand Guidelines */}
