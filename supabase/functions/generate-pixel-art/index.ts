@@ -9,7 +9,16 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { prompt, assetType, width, height, paletteColors, styleModifiers, variationIndex } = await req.json();
+    const { prompt, assetType, width: reqWidth, height: reqHeight, paletteColors, styleModifiers, variationIndex } = await req.json();
+
+    // Cap forge grid to 64x64 max — larger grids exceed LLM output limits
+    const MAX_FORGE_DIM = 64;
+    const width = Math.min(reqWidth, MAX_FORGE_DIM);
+    const height = Math.min(reqHeight, MAX_FORGE_DIM);
+
+    if (reqWidth > MAX_FORGE_DIM || reqHeight > MAX_FORGE_DIM) {
+      console.log(`Capped resolution from ${reqWidth}x${reqHeight} to ${width}x${height} for forge mode`);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
