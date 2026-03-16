@@ -8,6 +8,7 @@ import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import GeneratorPage from "./pages/GeneratorPage";
 import LibraryPage from "./pages/LibraryPage";
+import PaletteManagerPage from "./pages/PaletteManagerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
