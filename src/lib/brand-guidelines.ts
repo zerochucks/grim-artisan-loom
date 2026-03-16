@@ -243,9 +243,11 @@ export function getValueStructure(width: number, height: number): ValueStructure
  * Build the complete negative constraint string for a given context.
  */
 export function buildNegatives(assetType: string, width: number, height: number): string {
-  const parts = [...NEGATIVE_CONSTRAINTS.universal];
-  const typeNegatives = (NEGATIVE_CONSTRAINTS as Record<string, string[]>)[assetType];
-  if (typeNegatives) parts.push(...typeNegatives);
+  const parts: string[] = [...NEGATIVE_CONSTRAINTS.universal];
+  const typeKey = assetType as keyof typeof NEGATIVE_CONSTRAINTS;
+  if (typeKey in NEGATIVE_CONSTRAINTS && typeKey !== 'universal' && typeKey !== 'sprite') {
+    parts.push(...NEGATIVE_CONSTRAINTS[typeKey]);
+  }
   const targetSize = Math.max(width, height);
   if (targetSize <= 128) parts.push(...NEGATIVE_CONSTRAINTS.sprite);
   return parts.join(', ');
