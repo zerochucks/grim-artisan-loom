@@ -232,6 +232,9 @@ const GeneratorPage = () => {
           </div>
           <p className="text-xs text-muted-foreground">
             {currentAssetType.icon} {currentAssetType.label} · {width}×{height} · {selectedPalette.name} · {generationMode === 'forge' ? 'HEX GRID' : 'IMAGE GEN'} · ⌘+Enter to forge
+            {generationMode === 'forge' && (width > 64 || height > 64) && (
+              <span className="text-primary ml-2">⚠ Forge caps at 64×64 — switch to IMAGE GEN for larger</span>
+            )}
           </p>
         </div>
 
