@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { renderGrid, postProcessRender, generateAssetName } from '@/lib/canvas-utils';
 import {
   ASSET_TYPES, BUILT_IN_PALETTES, EXAMPLE_PROMPTS,
+  SCENE_PIECES, SCENE_EXAMPLE_PROMPT,
   type AssetTypeId, type StyleModifierId, type GeneratedAsset,
 } from '@/lib/forge-constants';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +19,6 @@ const GeneratorPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Generator state
   const [prompt, setPrompt] = useState('');
   const [assetType, setAssetType] = useState<AssetTypeId>('character');
   const [width, setWidth] = useState(48);
@@ -26,16 +26,40 @@ const GeneratorPage = () => {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [modifiers, setModifiers] = useState<StyleModifierId[]>(['hue_shifted', 'textured']);
   const [variationCount, setVariationCount] = useState(1);
-  const [generationMode, setGenerationMode] = useState<'forge' | 'render'>('forge');
+  const [generationMode, setGenerationMode] = useState<'forge' | 'render' | 'scene'>('forge');
 
-  // Results
   const [generating, setGenerating] = useState(false);
   const [currentAssets, setCurrentAssets] = useState<GeneratedAsset[]>([]);
   const [sessionHistory, setSessionHistory] = useState<GeneratedAsset[]>([]);
 
   const selectedPalette = BUILT_IN_PALETTES[paletteIndex];
   const currentAssetType = ASSET_TYPES.find((t) => t.id === assetType)!;
-  const placeholderPrompt = EXAMPLE_PROMPTS[assetType];
+  const placeholderPrompt = generationMode === 'scene' ? SCENE_EXAMPLE_PROMPT : EXAMPLE_PROMPTS[assetType];
+
+  const generateRenderAsset = useCallback(async (
+    assetPrompt: string,
+    assetTypeId: AssetTypeId,
+    w: number,
+    h: number,
+  ) => {
+    const { data, error } = await supabase.functions.invoke('generate-image-asset', {
+      body: {
+        prompt: assetPrompt,
+        assetType: assetTypeId,
+        width: w,
+        height: h,
+        paletteDescription: `${selectedPalette.name} palette: ${selectedPalette.colors.join(', ')}`,
+        styleModifiers: modifiers,
+        skipQuantize: true,
+      },
+    });
+
+    if (error) throw new Error(error.message || 'Generation failed');
+    if (data?.error) throw new Error(data.error);
+
+    const shouldSkipQuantize = data.skipQuantize ?? true;
+    return postProcessRender(data.image, w, h, selectedPalette.colors, shouldSkipQuantize);
+  }, [selectedPalette, modifiers]);
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
@@ -44,90 +68,107 @@ const GeneratorPage = () => {
     }
 
     setGenerating(true);
-    toast.info('EXTRACTING PIXELS...');
 
     try {
       const newAssets: GeneratedAsset[] = [];
 
-      for (let v = 0; v < variationCount; v++) {
-        if (generationMode === 'forge') {
-          const { data, error } = await supabase.functions.invoke('generate-pixel-art', {
-            body: {
+      if (generationMode === 'scene') {
+        toast.info('ASSEMBLING SCENE — 3 PIECES FORGING IN PARALLEL...');
+
+        // Fire all 3 scene pieces in parallel
+        const piecePromises = SCENE_PIECES.map(async (piece) => {
+          const piecePrompt = `${prompt.trim()}, ${piece.promptSuffix}`;
+          const typeInfo = ASSET_TYPES.find((t) => t.id === piece.assetType)!;
+          const imageDataUrl = await generateRenderAsset(piecePrompt, piece.assetType, width, height);
+
+          return {
+            name: generateAssetName(`${piece.label} ${prompt}`, typeInfo.prefix, width, height, sessionHistory.length + 1),
+            prompt: piecePrompt,
+            assetType: piece.assetType,
+            width,
+            height,
+            paletteColors: selectedPalette.colors,
+            paletteName: selectedPalette.name,
+            imageDataUrl,
+            styleModifiers: [...modifiers],
+            generationMode: 'scene' as const,
+            scenePiece: piece.label,
+            createdAt: new Date().toISOString(),
+          };
+        });
+
+        const results = await Promise.allSettled(piecePromises);
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            newAssets.push(result.value);
+          } else {
+            console.error('Scene piece failed:', result.reason);
+            toast.error(`PIECE FAILED: ${result.reason?.message || 'Unknown'}`);
+          }
+        }
+
+        if (newAssets.length === 0) throw new Error('All scene pieces failed');
+      } else {
+        toast.info('EXTRACTING PIXELS...');
+        for (let v = 0; v < variationCount; v++) {
+          if (generationMode === 'forge') {
+            const { data, error } = await supabase.functions.invoke('generate-pixel-art', {
+              body: {
+                prompt: prompt.trim(),
+                assetType: currentAssetType.id,
+                width,
+                height,
+                paletteColors: selectedPalette.colors,
+                styleModifiers: modifiers,
+                variationIndex: v,
+              },
+            });
+
+            if (error) throw new Error(error.message || 'Generation failed');
+            if (data?.error) throw new Error(data.error);
+
+            const gridRows: string[] = data.grid;
+            const imageDataUrl = renderGrid(gridRows, selectedPalette.colors, width, height);
+
+            newAssets.push({
+              name: generateAssetName(prompt, currentAssetType.prefix, width, height, sessionHistory.length + v + 1),
               prompt: prompt.trim(),
-              assetType: currentAssetType.id,
+              assetType,
               width,
               height,
               paletteColors: selectedPalette.colors,
-              styleModifiers: modifiers,
-              variationIndex: v,
-            },
-          });
+              paletteName: selectedPalette.name,
+              gridData: gridRows,
+              imageDataUrl,
+              styleModifiers: [...modifiers],
+              generationMode: 'forge',
+              createdAt: new Date().toISOString(),
+            });
+          } else {
+            const imageDataUrl = await generateRenderAsset(prompt.trim(), currentAssetType.id, width, height);
 
-          if (error) throw new Error(error.message || 'Generation failed');
-          if (data?.error) throw new Error(data.error);
-
-          const gridRows: string[] = data.grid;
-          const imageDataUrl = renderGrid(gridRows, selectedPalette.colors, width, height);
-
-          newAssets.push({
-            name: generateAssetName(prompt, currentAssetType.prefix, width, height, sessionHistory.length + v + 1),
-            prompt: prompt.trim(),
-            assetType,
-            width,
-            height,
-            paletteColors: selectedPalette.colors,
-            paletteName: selectedPalette.name,
-            gridData: gridRows,
-            imageDataUrl,
-            styleModifiers: [...modifiers],
-            generationMode: 'forge',
-            createdAt: new Date().toISOString(),
-          });
-        } else {
-          // Render mode
-          const { data, error } = await supabase.functions.invoke('generate-image-asset', {
-            body: {
+            newAssets.push({
+              name: generateAssetName(prompt, currentAssetType.prefix, width, height, sessionHistory.length + v + 1),
               prompt: prompt.trim(),
-              assetType: currentAssetType.id,
+              assetType,
               width,
               height,
-              paletteDescription: `${selectedPalette.name} palette: ${selectedPalette.colors.join(', ')}`,
-              styleModifiers: modifiers,
-              skipQuantize: true,
-            },
-          });
-
-          if (error) throw new Error(error.message || 'Generation failed');
-          if (data?.error) throw new Error(data.error);
-
-          const shouldSkipQuantize = data.skipQuantize ?? true;
-          const imageDataUrl = await postProcessRender(
-            data.image,
-            width,
-            height,
-            selectedPalette.colors,
-            shouldSkipQuantize
-          );
-
-          newAssets.push({
-            name: generateAssetName(prompt, currentAssetType.prefix, width, height, sessionHistory.length + v + 1),
-            prompt: prompt.trim(),
-            assetType,
-            width,
-            height,
-            paletteColors: selectedPalette.colors,
-            paletteName: selectedPalette.name,
-            imageDataUrl,
-            styleModifiers: [...modifiers],
-            generationMode: 'render',
-            createdAt: new Date().toISOString(),
-          });
+              paletteColors: selectedPalette.colors,
+              paletteName: selectedPalette.name,
+              imageDataUrl,
+              styleModifiers: [...modifiers],
+              generationMode: 'render',
+              createdAt: new Date().toISOString(),
+            });
+          }
         }
       }
 
       setCurrentAssets(newAssets);
       setSessionHistory((prev) => [...newAssets, ...prev]);
-      toast.success('ARTIFACT FORGED SUCCESSFULLY.');
+      toast.success(generationMode === 'scene'
+        ? `SCENE ASSEMBLED — ${newAssets.length}/3 PIECES FORGED.`
+        : 'ARTIFACT FORGED SUCCESSFULLY.');
     } catch (err: any) {
       console.error('Generation error:', err);
       if (err.message?.includes('429') || err.message?.includes('rate limit')) {
@@ -140,7 +181,7 @@ const GeneratorPage = () => {
     } finally {
       setGenerating(false);
     }
-  }, [prompt, assetType, width, height, paletteIndex, modifiers, variationCount, generationMode, selectedPalette, currentAssetType, sessionHistory.length]);
+  }, [prompt, assetType, width, height, paletteIndex, modifiers, variationCount, generationMode, selectedPalette, currentAssetType, sessionHistory.length, generateRenderAsset]);
 
   const handleSaveAsset = useCallback(async (asset: GeneratedAsset) => {
     try {
@@ -164,9 +205,12 @@ const GeneratorPage = () => {
     }
   }, [user]);
 
+  const statusLine = generationMode === 'scene'
+    ? `🎬 Scene Mode · ${width}×${height} · ${selectedPalette.name} · Portrait + Props + Background · ⌘+Enter to forge`
+    : `${currentAssetType.icon} ${currentAssetType.label} · ${width}×${height} · ${selectedPalette.name} · ${generationMode === 'forge' ? 'HEX GRID' : 'IMAGE GEN'} · ⌘+Enter to forge`;
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Left Sidebar */}
       <GeneratorSidebar
         assetType={assetType}
         onAssetTypeChange={setAssetType}
@@ -184,34 +228,16 @@ const GeneratorPage = () => {
         onGenerationModeChange={setGenerationMode}
       />
 
-      {/* Center */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-4 py-2">
           <h1 className="font-display text-sm text-primary tracking-widest">PIXEL FORGE</h1>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/library')}
-              className="text-xs text-muted-foreground hover:text-accent transition-colors font-body"
-            >
-              VAULT
-            </button>
-            <button
-              onClick={() => navigate('/palettes')}
-              className="text-xs text-muted-foreground hover:text-accent transition-colors font-body"
-            >
-              PALETTES
-            </button>
-            <button
-              onClick={signOut}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors font-body"
-            >
-              EXIT
-            </button>
+            <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
+            <button onClick={() => navigate('/palettes')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">PALETTES</button>
+            <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
           </div>
         </div>
 
-        {/* Prompt Area */}
         <div className="border-b border-border p-4 space-y-3">
           <div className="flex gap-3">
             <Textarea
@@ -220,9 +246,7 @@ const GeneratorPage = () => {
               placeholder={placeholderPrompt}
               className="flex-1 bg-muted border-border text-foreground font-body text-sm min-h-[60px] max-h-[100px] resize-none"
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  handleGenerate();
-                }
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate();
               }}
             />
             <Button
@@ -230,18 +254,17 @@ const GeneratorPage = () => {
               disabled={generating}
               className={`font-display text-xs tracking-widest px-6 self-end ${generating ? 'forge-pulse' : ''}`}
             >
-              {generating ? 'FORGING...' : 'FORGE'}
+              {generating ? (generationMode === 'scene' ? 'ASSEMBLING...' : 'FORGING...') : 'FORGE'}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            {currentAssetType.icon} {currentAssetType.label} · {width}×{height} · {selectedPalette.name} · {generationMode === 'forge' ? 'HEX GRID' : 'IMAGE GEN'} · ⌘+Enter to forge
+            {statusLine}
             {generationMode === 'forge' && (width > 64 || height > 64) && (
-              <span className="text-primary ml-2">⚠ Forge caps at 64×64 — switch to IMAGE GEN for larger</span>
+              <span className="text-primary ml-2">⚠ Forge caps at 64×64 — switch to IMAGE GEN or SCENE for larger</span>
             )}
           </p>
         </div>
 
-        {/* Canvas / Preview */}
         <GeneratorCanvas
           currentAssets={currentAssets}
           sessionHistory={sessionHistory}
@@ -250,7 +273,6 @@ const GeneratorPage = () => {
         />
       </div>
 
-      {/* Right Panel */}
       <GeneratorRightPanel
         currentAssets={currentAssets}
         sessionHistory={sessionHistory}
