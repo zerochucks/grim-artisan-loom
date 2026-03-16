@@ -1,9 +1,33 @@
+import { useState, useEffect, useCallback } from 'react';
 import {
   ASSET_TYPES, BUILT_IN_PALETTES, STYLE_MODIFIERS, RESOLUTION_PRESETS,
   type AssetTypeId, type StyleModifierId,
 } from '@/lib/forge-constants';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
+
+interface StyleRecipe {
+  id: string;
+  name: string;
+  description: string;
+  modifiers: string[];
+  isBuiltin: boolean;
+}
+
+// Built-in recipes
+const BUILTIN_RECIPES: Omit<StyleRecipe, 'id'>[] = [
+  { name: 'Stoneshard Bandit', description: 'Earthy detailed characters', modifiers: ['thin_outline', 'hue_shifted', 'textured', 'warm_lighting'], isBuiltin: true },
+  { name: 'Darkest Icon', description: 'Dense painterly skill icons', modifiers: ['heavy_outline', 'high_detail', 'symmetry', 'blood_gore'], isBuiltin: true },
+  { name: 'Dungeon Tile', description: 'Atmospheric stone floors', modifiers: ['no_outline', 'dithered', 'textured', 'cold_lighting'], isBuiltin: true },
+  { name: 'Gothic UI', description: 'Clean gothic borders', modifiers: ['heavy_outline', 'flat', 'symmetry'], isBuiltin: true },
+  { name: 'Eldritch Horror', description: 'Arcane creatures with glow', modifiers: ['thin_outline', 'smooth', 'hue_shifted', 'cold_lighting', 'arcane_glow'], isBuiltin: true },
+  { name: 'Blood & Iron', description: 'Warfare equipment, gritty', modifiers: ['heavy_outline', 'high_detail', 'textured', 'warm_lighting', 'blood_gore'], isBuiltin: true },
+];
 
 interface GeneratorSidebarProps {
   assetType: AssetTypeId;
@@ -30,9 +54,33 @@ export function GeneratorSidebar({
   variationCount, onVariationCountChange,
   generationMode, onGenerationModeChange,
 }: GeneratorSidebarProps) {
+  const { user } = useAuth();
+  const [recipes, setRecipes] = useState<StyleRecipe[]>([]);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [recipeName, setRecipeName] = useState('');
+  const [recipeDesc, setRecipeDesc] = useState('');
+
+  const fetchRecipes = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('style_recipes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setRecipes(
+      (data || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description || '',
+        modifiers: r.modifiers || [],
+        isBuiltin: r.is_builtin,
+      }))
+    );
+  }, [user]);
+
+  useEffect(() => { fetchRecipes(); }, [fetchRecipes]);
+
   const toggleModifier = (id: StyleModifierId) => {
     const mod = STYLE_MODIFIERS.find((m) => m.id === id)!;
-    // Remove same-group modifiers, then toggle
     const sameGroup = STYLE_MODIFIERS.filter((m) => m.group === mod.group).map((m) => m.id);
     const filtered = modifiers.filter((m) => !sameGroup.includes(m));
     if (modifiers.includes(id)) {
@@ -40,6 +88,35 @@ export function GeneratorSidebar({
     } else {
       onModifiersChange([...filtered, id]);
     }
+  };
+
+  const applyRecipe = (recipe: Omit<StyleRecipe, 'id'> | StyleRecipe) => {
+    onModifiersChange(recipe.modifiers as StyleModifierId[]);
+    toast.success(`RECIPE APPLIED: ${recipe.name}`);
+  };
+
+  const handleSaveRecipe = async () => {
+    if (!recipeName.trim()) { toast.error('NAME YOUR RECIPE.'); return; }
+    if (modifiers.length === 0) { toast.error('SELECT MODIFIERS FIRST.'); return; }
+    const { error } = await supabase.from('style_recipes').insert({
+      user_id: user!.id,
+      name: recipeName.trim(),
+      description: recipeDesc.trim(),
+      modifiers: [...modifiers],
+      is_builtin: false,
+    });
+    if (error) { toast.error('SAVE FAILED.'); return; }
+    toast.success('RECIPE SAVED.');
+    setSaveDialogOpen(false);
+    setRecipeName('');
+    setRecipeDesc('');
+    fetchRecipes();
+  };
+
+  const handleDeleteRecipe = async (id: string) => {
+    await supabase.from('style_recipes').delete().eq('id', id);
+    toast.success('RECIPE DESTROYED.');
+    fetchRecipes();
   };
 
   return (
@@ -85,25 +162,11 @@ export function GeneratorSidebar({
           <div className="flex gap-2 mt-2">
             <div className="flex-1">
               <label className="text-[10px] text-muted-foreground">W</label>
-              <Input
-                type="number"
-                min={8}
-                max={128}
-                value={width}
-                onChange={(e) => onWidthChange(Number(e.target.value))}
-                className="h-6 text-xs bg-muted border-border px-1"
-              />
+              <Input type="number" min={8} max={128} value={width} onChange={(e) => onWidthChange(Number(e.target.value))} className="h-6 text-xs bg-muted border-border px-1" />
             </div>
             <div className="flex-1">
               <label className="text-[10px] text-muted-foreground">H</label>
-              <Input
-                type="number"
-                min={8}
-                max={128}
-                value={height}
-                onChange={(e) => onHeightChange(Number(e.target.value))}
-                className="h-6 text-xs bg-muted border-border px-1"
-              />
+              <Input type="number" min={8} max={128} value={height} onChange={(e) => onHeightChange(Number(e.target.value))} className="h-6 text-xs bg-muted border-border px-1" />
             </div>
           </div>
         </Section>
@@ -116,23 +179,65 @@ export function GeneratorSidebar({
                 key={p.name}
                 onClick={() => onPaletteIndexChange(i)}
                 className={`w-full text-left border p-1.5 transition-colors ${
-                  paletteIndex === i
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-accent'
+                  paletteIndex === i ? 'border-primary bg-primary/10' : 'border-border hover:border-accent'
                 }`}
               >
                 <p className="text-[11px] text-foreground font-body mb-1">{p.name}</p>
                 <div className="flex gap-0">
                   {p.colors.slice(0, 16).map((c, ci) => (
-                    <div
-                      key={ci}
-                      className="h-3 flex-1"
-                      style={{ backgroundColor: c }}
-                    />
+                    <div key={ci} className="h-3 flex-1" style={{ backgroundColor: c }} />
                   ))}
                 </div>
               </button>
             ))}
+          </div>
+        </Section>
+
+        {/* Style Recipes */}
+        <Section title="STYLE RECIPES">
+          <div className="space-y-1">
+            {BUILTIN_RECIPES.map((r) => (
+              <button
+                key={r.name}
+                onClick={() => applyRecipe(r)}
+                className="w-full text-left border border-border hover:border-accent p-1.5 transition-colors group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-foreground font-body">{r.name}</span>
+                  <span className="text-[9px] text-accent border border-accent/30 px-1 opacity-0 group-hover:opacity-100 transition-opacity">APPLY</span>
+                </div>
+                <p className="text-[9px] text-muted-foreground">{r.description}</p>
+              </button>
+            ))}
+
+            {recipes.map((r) => (
+              <div key={r.id} className="flex items-center gap-1">
+                <button
+                  onClick={() => applyRecipe(r)}
+                  className="flex-1 text-left border border-border hover:border-accent p-1.5 transition-colors"
+                >
+                  <span className="text-[11px] text-foreground font-body">{r.name}</span>
+                  {r.description && <p className="text-[9px] text-muted-foreground">{r.description}</p>}
+                </button>
+                <button
+                  onClick={() => handleDeleteRecipe(r.id)}
+                  className="text-[10px] text-muted-foreground hover:text-primary px-1 py-1"
+                  title="Delete"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => { setRecipeName(''); setRecipeDesc(''); setSaveDialogOpen(true); }}
+              className="w-full text-[10px] h-6 mt-1"
+              disabled={modifiers.length === 0}
+            >
+              💾 SAVE CURRENT AS RECIPE
+            </Button>
           </div>
         </Section>
 
@@ -157,13 +262,7 @@ export function GeneratorSidebar({
 
         {/* Variations */}
         <Section title={`VARIATIONS: ${variationCount}`}>
-          <Slider
-            min={1}
-            max={6}
-            step={1}
-            value={[variationCount]}
-            onValueChange={([v]) => onVariationCountChange(v)}
-          />
+          <Slider min={1} max={6} step={1} value={[variationCount]} onValueChange={([v]) => onVariationCountChange(v)} />
         </Section>
 
         {/* Generation Mode */}
@@ -172,9 +271,7 @@ export function GeneratorSidebar({
             <button
               onClick={() => onGenerationModeChange('forge')}
               className={`flex-1 text-[11px] font-body py-1.5 border transition-colors ${
-                generationMode === 'forge'
-                  ? 'border-primary bg-primary/10 text-foreground'
-                  : 'border-border text-muted-foreground hover:border-accent'
+                generationMode === 'forge' ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:border-accent'
               }`}
             >
               ⚒️ FORGE
@@ -182,21 +279,53 @@ export function GeneratorSidebar({
             <button
               onClick={() => onGenerationModeChange('render')}
               className={`flex-1 text-[11px] font-body py-1.5 border transition-colors ${
-                generationMode === 'render'
-                  ? 'border-primary bg-primary/10 text-foreground'
-                  : 'border-border text-muted-foreground hover:border-accent'
+                generationMode === 'render' ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:border-accent'
               }`}
             >
               🖼️ RENDER
             </button>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {generationMode === 'forge'
-              ? 'Hex grid via AI. Best ≤48px. Exact palette.'
-              : 'Image gen + quantize. Best ≥48px. Approximate palette.'}
+            {generationMode === 'forge' ? 'Hex grid via AI. Best ≤48px. Exact palette.' : 'Image gen + quantize. Best ≥48px. Approximate palette.'}
           </p>
         </Section>
       </div>
+
+      {/* Save Recipe Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent className="max-w-sm bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest">SAVE STYLE RECIPE</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-[10px] text-accent font-display tracking-widest">NAME</label>
+              <Input value={recipeName} onChange={(e) => setRecipeName(e.target.value)} placeholder="My Recipe" className="bg-muted border-border text-sm h-8" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] text-accent font-display tracking-widest">DESCRIPTION</label>
+              <Input value={recipeDesc} onChange={(e) => setRecipeDesc(e.target.value)} placeholder="Short description..." className="bg-muted border-border text-sm h-8" />
+            </div>
+            <div>
+              <label className="text-[10px] text-accent font-display tracking-widest">MODIFIERS</label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {modifiers.map((m) => {
+                  const mod = STYLE_MODIFIERS.find((s) => s.id === m);
+                  return (
+                    <span key={m} className="text-[10px] font-body px-2 py-0.5 border border-primary bg-primary/10 text-foreground">
+                      {mod?.label || m}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleSaveRecipe} className="flex-1 font-display text-xs tracking-widest">SAVE RECIPE</Button>
+              <Button variant="outline" onClick={() => setSaveDialogOpen(false)} className="text-xs">CANCEL</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
