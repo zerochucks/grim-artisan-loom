@@ -194,6 +194,12 @@ const GeneratorPage = () => {
               VAULT
             </button>
             <button
+              onClick={() => navigate('/palettes')}
+              className="text-xs text-muted-foreground hover:text-accent transition-colors font-body"
+            >
+              PALETTES
+            </button>
+            <button
               onClick={signOut}
               className="text-xs text-muted-foreground hover:text-primary transition-colors font-body"
             >
