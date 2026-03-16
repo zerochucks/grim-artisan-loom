@@ -284,9 +284,21 @@ export function GeneratorSidebar({
             >
               🖼️ RENDER
             </button>
+            <button
+              onClick={() => onGenerationModeChange('scene')}
+              className={`flex-1 text-[11px] font-body py-1.5 border transition-colors ${
+                generationMode === 'scene' ? 'border-primary bg-primary/10 text-foreground' : 'border-border text-muted-foreground hover:border-accent'
+              }`}
+            >
+              🎬 SCENE
+            </button>
           </div>
           <p className="text-[10px] text-muted-foreground mt-1">
-            {generationMode === 'forge' ? 'Hex grid via AI. Best ≤48px. Exact palette.' : 'Image gen + quantize. Best ≥48px. Approximate palette.'}
+            {generationMode === 'forge'
+              ? 'Hex grid via AI. Best ≤48px. Exact palette.'
+              : generationMode === 'render'
+              ? 'Image gen + downscale. Best ≥48px.'
+              : 'Generates portrait + props + background as 3 separate assets.'}
           </p>
         </Section>
       </div>
