@@ -102,6 +102,32 @@ export const EXAMPLE_PROMPTS: Record<AssetTypeId, string> = {
   effect: 'Blood slash impact — crimson arc with droplet particles trailing off the edges',
 };
 
+export const SCENE_EXAMPLE_PROMPT = 'A debt collector in a shadowy tavern booth, fine but worn attire, subtle menace, contract parchment and coins on the table';
+
+export interface ScenePiece {
+  label: string;
+  assetType: AssetTypeId;
+  promptSuffix: string;
+}
+
+export const SCENE_PIECES: ScenePiece[] = [
+  {
+    label: 'Portrait',
+    assetType: 'character',
+    promptSuffix: 'character portrait, intense eye contact, cinematic torchlight warm key light with cold rift glow rim light, 35mm, shallow depth of field, clean readable composition, subject centered, high detail materials',
+  },
+  {
+    label: 'Props',
+    assetType: 'item',
+    promptSuffix: 'still-life props close-up on a surface, 85mm macro lens, 3/4 top-down angle, sharp focus, props clearly separated, product-photography realism, high detail textures (linen, leather, iron, parchment)',
+  },
+  {
+    label: 'Background',
+    assetType: 'environment',
+    promptSuffix: 'interior background plate, cinematic wide establishing shot, rule-of-thirds framing, readable silhouettes, atmospheric depth, empty negative space for UI overlay',
+  },
+];
+
 export interface GeneratedAsset {
   id?: string;
   name: string;
@@ -114,6 +140,7 @@ export interface GeneratedAsset {
   gridData?: string[];
   imageDataUrl: string;
   styleModifiers: string[];
-  generationMode: 'forge' | 'render';
+  generationMode: 'forge' | 'render' | 'scene';
+  scenePiece?: string;
   createdAt: string;
 }

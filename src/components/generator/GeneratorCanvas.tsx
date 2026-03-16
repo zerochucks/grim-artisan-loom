@@ -52,6 +52,11 @@ export function GeneratorCanvas({ currentAssets, sessionHistory, generating, onS
                     >
                       SAVE
                     </Button>
+                    {asset.scenePiece && (
+                      <span className="text-[10px] text-accent font-display tracking-widest self-center">
+                        {asset.scenePiece.toUpperCase()}
+                      </span>
+                    )}
                     <span className="text-[10px] text-muted-foreground self-center ml-1 font-body truncate max-w-[200px]">
                       {asset.name}
                     </span>
