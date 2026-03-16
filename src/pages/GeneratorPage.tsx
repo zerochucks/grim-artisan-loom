@@ -270,6 +270,7 @@ const GeneratorPage = () => {
           sessionHistory={sessionHistory}
           generating={generating}
           onSave={handleSaveAsset}
+          onLoadFromHistory={(assets) => setCurrentAssets(assets)}
         />
       </div>
 
