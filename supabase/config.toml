@@ -1,0 +1,7 @@
+project_id = "obhzrywjbqhptrtxprov"
+
+[functions.generate-pixel-art]
+verify_jwt = false
+
+[functions.generate-image-asset]
+verify_jwt = false
