@@ -5,6 +5,116 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ─── BRAND GUIDELINES (server-side mirror) ────────────────────────
+// These are the production art-direction rules, kept in sync with
+// src/lib/brand-guidelines.ts but self-contained for edge deployment.
+
+const BRAND = {
+  identity: "Grimdark low-fantasy, morally-gray, gritty, weathered, lived-in. Inspired by Stoneshard, Darkest Dungeon, Kingdom Death. Late medieval / early renaissance. Never clean, never heroic, never sci-fi.",
+  
+  lighting: {
+    key: "warm torchlight / candlelight, directional from upper-left, golden-amber temperature",
+    rim: "cold cyan-blue rim light along ONE consistent edge (right side preferred), brighter than mid-values, saturated but NOT neon. Must serve as readable outline at small sizes.",
+    fill: "minimal cool ambient fill from opposite side, just enough to prevent total black crush",
+    shadows: "hue-shifted shadows: purple/blue undertones in dark areas, never pure black or pure grey",
+    rule: "Warm key + cold rim is the SIGNATURE look. Rim MUST be consistent along ONE side — no patchy outline.",
+  },
+
+  values: {
+    sprite: "CRITICAL — minimum 4 clearly distinct tonal bands: deep shadow, mid-shadow, mid-light, highlight. Each major form (head, torso, arms) needs its own tonal identity. Torso must NOT collapse into a single dark mass. Force value breaks: brighter lapel edge, lighter shirt under coat, subtle highlight on collar/shoulder seam.",
+    large: "6+ tonal bands with smooth transitions. Still maintain clear silhouette separation between major forms.",
+  },
+
+  color: {
+    temperature: "Overall muted/desaturated. Warm accents are EARNED — only on key focal points (wounds, fire, gold details).",
+    accents: "Reds and golds are accent colors, used sparingly for emphasis. Never uniform warm wash.",
+    shadows: "Shadows shift toward purple/blue/violet. Never pure black. Never pure grey.",
+    highlights: "Highlights shift toward warm gold/amber on light-facing edges. Never pure white.",
+    saturation: "Low overall saturation with strategic pops. Most saturated element = deliberate focal point.",
+  },
+
+  materials: {
+    metals: "oiled steel, tarnished iron, cold-forged, pitted and worn — never chrome or polished mirror",
+    leather: "cracked, oil-darkened, sweat-stained, visible grain and stitching",
+    fabric: "coarse linen, wool, heavy canvas, frayed edges — never silk or synthetic",
+    skin: "weathered, scarred, age-lined — never smooth or porcelain",
+    wood: "dark oak, weathered pine, worm-eaten, visible grain and age marks",
+    stone: "rough-hewn, lichen-spotted, mortar-cracked, with chips and wear",
+    paper: "yellowed parchment, wax-sealed, ink-faded, foxing and water stains",
+    glass: "thick, bubbled, slightly greenish tint — medieval blown glass",
+  },
+};
+
+// Sprite readability safeguards by max dimension
+function getSpriteSafeguards(w: number, h: number): string {
+  const size = Math.max(w, h);
+  if (size <= 32) {
+    return "EXTREME SIMPLIFICATION: 2-3 colors per form maximum. Bold outline. No interior detail that won't survive downscale. Silhouette must read as a single recognizable blob. Flat color fills with minimal shading.";
+  }
+  if (size <= 64) {
+    return "HIGH CONTRAST VALUE GROUPING: minimum 4 tonal bands. Simplified midtones — group similar values, avoid gradual gradients. Clean shape massing over micro-texture. NO dithering noise. Rim light bright enough to serve as outline. FORCE value breaks on torso (brighter lapel/collar/shirt edge). Minimal micro-texture. Consistent rim light along ONE side only.";
+  }
+  if (size <= 128) {
+    return "Moderate detail allowed but forms must still read as clear shapes. Value separation between major body parts. Some texture acceptable but subordinate to form.";
+  }
+  return "Full detail allowed. Maintain readable silhouette and strong value structure.";
+}
+
+// Composition rules per asset type
+const COMPOSITION: Record<string, string> = {
+  character: "Chest-up or waist-up, centered subject, slight low angle for authority. Direct eye contact, shoulders squared, grounded weight. Tight crop — subject fills 70-80% of frame. 35mm equivalent, shallow DOF.",
+  equipment: "Product-shot style, single item, slight 3/4 angle. Material detail visible, wear marks tell a story. Macro lens, sharp focus. Clean dark background, item isolated.",
+  icon: "Centered, fills frame to edges, bold graphic shape. Silhouette must read at 16x16. Flat/orthographic, no perspective distortion. Minimal negative space.",
+  item: "3/4 top-down angle, items clearly separated with breathing room. Deliberate still-life arrangement on contextual surface. 85mm macro, entire arrangement in focus.",
+  environment: "Wide establishing shot, rule-of-thirds, horizon in lower/upper third. 3 clear depth planes. Intentional negative space for UI. 24-35mm wide, deep DOF. Volumetric haze/smoke.",
+  tileset: "Top-down or front-facing, perfectly flat. Even lighting. Consistent texture density. Clean edges for seamless tiling.",
+  ui: "Flat front-facing, symmetric. Ornate iron/stone detail. Clean interior space. Dark background.",
+  effect: "Isolated on dark/transparent background. Dynamic motion implied. High contrast glow. Clean shape at small sizes.",
+};
+
+// Negative constraint banks
+function buildNegatives(assetType: string, w: number, h: number): string {
+  const universal = [
+    "no anime", "no cartoon", "no chibi", "no cel-shading",
+    "no modern clothing", "no sci-fi elements", "no neon lighting",
+    "no text overlays", "no watermarks", "no lens flare",
+    "no chromatic aberration", "no AI artifacts (extra fingers, merged limbs, floating objects)",
+  ];
+
+  const typeNeg: Record<string, string[]> = {
+    character: ["no extra limbs", "no deformed hands", "no blurred face", "no background scenery", "no heroic pose", "no clean/pristine clothing", "no sparkly effects"],
+    equipment: ["no characters", "no hands holding items", "no readable text", "no modern materials", "no clutter pile"],
+    icon: ["no 3D perspective", "no characters", "no text", "no complex background"],
+    item: ["no characters", "no hands holding items", "no readable text", "no modern materials", "no clutter pile"],
+    environment: ["no characters present", "no readable text/signage", "no fisheye distortion", "no extreme Dutch angle"],
+    tileset: ["no perspective distortion", "no characters", "no text"],
+    ui: ["no characters", "no readable text", "no modern design", "no 3D perspective"],
+    effect: ["no characters", "no text", "no background scenery"],
+  };
+
+  const spriteNeg = Math.max(w, h) <= 128
+    ? ["no noisy micro-texture", "no sparkly dithering", "no compressed midtones", "no sharpening artifacts"]
+    : [];
+
+  return [...universal, ...(typeNeg[assetType] || []), ...spriteNeg].join(", ");
+}
+
+// Material cues per asset type
+function getMaterialCues(assetType: string): string {
+  const relevant: Record<string, (keyof typeof BRAND.materials)[]> = {
+    character: ["metals", "leather", "fabric", "skin"],
+    equipment: ["metals", "leather", "wood"],
+    item: ["metals", "leather", "glass", "paper"],
+    environment: ["wood", "stone"],
+    tileset: ["stone", "wood"],
+    ui: ["metals", "stone", "wood"],
+    icon: [],
+    effect: [],
+  };
+  const keys = relevant[assetType] || ["metals", "leather"];
+  return keys.map((k) => `${k}: ${BRAND.materials[k]}`).join("; ");
+}
+
 function buildPrompt(
   prompt: string,
   assetType: string,
@@ -13,90 +123,64 @@ function buildPrompt(
   paletteDescription: string,
   modifierText: string
 ): string {
-  // Determine aspect descriptor for framing cues
   const isPortrait = height > width;
   const isSquare = height === width;
   const aspectHint = isSquare ? "1:1 square" : isPortrait ? "portrait aspect" : "landscape aspect";
 
-  // Sprite-size safeguards: bolted onto every asset type
-  const isSmallSprite = width <= 64 || height <= 64;
-  const spriteSafeguards = isSmallSprite
-    ? "high contrast value grouping, readable silhouette at small size, simplified midtones, clean shape massing over micro-texture, avoid dithering noise at downscale, group values into 3-4 clear tonal bands"
-    : "high detail materials, readable silhouette, strong value separation";
-
-  const rimLightNote = isSmallSprite
-    ? "slightly brighter rim light (saturated cyan-blue, not neon), ensure rim reads at small size"
-    : "cold rift glow rim light";
-
-  // Asset-type specific prompt templates with photography-style framing
-  const templates: Record<string, { subject: string; framing: string; negatives: string }> = {
-    character: {
-      subject: `${prompt}, morally-gray low-fantasy world, gritty realism, shoulders squared, direct gaze, slight low angle`,
-      framing: `cinematic torchlight warm key light with ${rimLightNote}, 35mm, shallow depth of field, clean readable composition, subject centered, ${spriteSafeguards}, high detail materials (worn leather, oiled steel, weathered fabric)`,
-      negatives: "no anime, no cartoon, no chibi, no extra limbs, no deformed hands, no blurred face, no modern clothing, no sci-fi, no neon, no text, no watermark, no background scenery, no clutter, no sparkly dithering, no noisy micro-texture",
-    },
-    equipment: {
-      subject: `${prompt}, product-photography style, single item on dark surface`,
-      framing: `studio lighting with warm key and cold fill, macro lens, sharp focus on material detail, ${spriteSafeguards}, high detail textures (worn leather, oiled steel, iron, parchment), clean dark background`,
-      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no cartoon, no noisy dithering",
-    },
-    icon: {
-      subject: `${prompt}, ability icon design, centered composition`,
-      framing: `flat dramatic lighting, clean circular or square vignette, bold readable silhouette, high contrast, graphic clarity at small sizes, ${spriteSafeguards}`,
-      negatives: "no 3D perspective, no characters, no text, no watermark, no complex background, no blur, no anime, no noisy micro-texture",
-    },
-    item: {
-      subject: `still-life close-up: ${prompt}, placed on a wooden surface`,
-      framing: `product-photography realism, torchlight + cold rift glow accents, sharp focus, props clearly separated, ${spriteSafeguards}, high detail textures (linen, leather, iron, parchment, glass)`,
-      negatives: "no characters, no hands, no readable text, no logos, no modern plastic, no clutter pile, no blur, no anime, no noisy dithering",
-    },
-    environment: {
-      subject: `${prompt}, low-fantasy interior or exterior detail`,
-      framing: `cinematic wide or medium shot, warm torchlight, subtle cold rift glow, clear silhouette shapes, atmospheric depth, gritty realism, ${spriteSafeguards}`,
-      negatives: "no characters, no readable text, no modern signage, no neon, no fisheye distortion, no extreme clutter, no anime, no noisy micro-texture",
-    },
-    tileset: {
-      subject: `${prompt}, seamless tileable pattern, top-down or front-facing view`,
-      framing: `flat even lighting, consistent texture density, clean edges for tiling, ${spriteSafeguards}`,
-      negatives: "no perspective distortion, no characters, no text, no watermark, no 3D depth, no anime",
-    },
-    ui: {
-      subject: `${prompt}, gothic UI frame or panel element`,
-      framing: `flat front-facing view, ornate iron/stone detail, clean interior space, symmetric composition, dark background, ${spriteSafeguards}`,
-      negatives: "no characters, no readable text, no modern design, no rounded corners, no blur, no anime, no 3D perspective",
-    },
-    effect: {
-      subject: `${prompt}, VFX particle or impact effect`,
-      framing: `isolated on dark/transparent background, dynamic motion trail, high contrast glow, clean readable shape at small sizes, ${spriteSafeguards}`,
-      negatives: "no characters, no text, no watermark, no background scenery, no blur, no anime",
-    },
-  };
-
-  const template = templates[assetType] || templates.character;
+  const isSmallSprite = Math.max(width, height) <= 64;
+  const valueRules = isSmallSprite ? BRAND.values.sprite : BRAND.values.large;
+  const safeguards = getSpriteSafeguards(width, height);
+  const composition = COMPOSITION[assetType] || COMPOSITION.character;
+  const materials = getMaterialCues(assetType);
+  const negatives = buildNegatives(assetType, width, height);
 
   return `Generate a single high-quality game art asset image.
 
-Subject: ${template.subject}
+═══ BRAND ART DIRECTION ═══
+${BRAND.identity}
 
-Style direction:
-- Dark fantasy grimdark art inspired by Stoneshard and Darkest Dungeon
-- Asset type: ${assetType}
-- ${aspectHint} composition, render at high resolution for downscaling to ${width}x${height}
-${paletteDescription ? `- Color direction: ${paletteDescription}` : ""}
-${modifierText ? `- Style modifiers: ${modifierText}` : ""}
+═══ SUBJECT ═══
+${prompt}
+Asset type: ${assetType} | ${aspectHint} | Target resolution: ${width}×${height}
 
-Visual execution:
-- ${template.framing}
-- Muted earth tones with sparse warm accents (reds, golds)
-- Hue-shifted shadows (purple/blue undertones in dark areas)
-- Warm gold highlights on light-facing edges
-- Gritty, textured, atmospheric feel
-- Strong readable silhouette
-- Value separation: ensure coat/armor, shirt/skin, and background occupy clearly distinct tonal bands
-- Avoid compressing midtones into a single mass — keep at least 3 distinct value steps in the main subject
+═══ COMPOSITION ═══
+${composition}
 
-Negative constraints:
-- ${template.negatives}`;
+═══ LIGHTING (SIGNATURE LOOK) ═══
+Key light: ${BRAND.lighting.key}
+Rim light: ${BRAND.lighting.rim}
+Fill: ${BRAND.lighting.fill}
+Shadows: ${BRAND.lighting.shadows}
+RULE: ${BRAND.lighting.rule}
+
+═══ VALUE STRUCTURE ═══
+${valueRules}
+
+═══ SPRITE READABILITY ═══
+${safeguards}
+
+═══ COLOR DIRECTION ═══
+Temperature: ${BRAND.color.temperature}
+Accents: ${BRAND.color.accents}
+Shadows: ${BRAND.color.shadows}
+Highlights: ${BRAND.color.highlights}
+Saturation: ${BRAND.color.saturation}
+${paletteDescription ? `Palette guidance: ${paletteDescription}` : ""}
+
+═══ MATERIAL LANGUAGE ═══
+${materials}
+
+${modifierText ? `═══ STYLE MODIFIERS ═══\n${modifierText}` : ""}
+
+═══ NEGATIVE CONSTRAINTS (DO NOT INCLUDE) ═══
+${negatives}
+
+═══ PRODUCTION NOTES ═══
+- Render at high resolution, designed for clean downscaling to ${width}×${height}
+- Every major form must have its own tonal identity — no value collapsing
+- Rim light must be consistent along ONE edge — no patchy outline
+- Prioritize shape clarity and value separation over surface detail
+- This is for a shipping game asset — it must read instantly in-game at target size`;
 }
 
 serve(async (req) => {
@@ -111,7 +195,7 @@ serve(async (req) => {
     const modifierText = (styleModifiers || []).join(", ");
     const imagePrompt = buildPrompt(prompt, assetType, width, height, paletteDescription || "", modifierText);
 
-    console.log("Render prompt:", imagePrompt.substring(0, 200));
+    console.log("Render prompt (first 300 chars):", imagePrompt.substring(0, 300));
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
