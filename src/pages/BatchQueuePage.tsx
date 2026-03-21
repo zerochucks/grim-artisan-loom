@@ -168,20 +168,34 @@ const BatchQueuePage = () => {
       return;
     }
 
+    batchAbort.current = false;
+    setBatchRunning(true);
     toast.info(`Starting batch: ${queue.length} assets. Generating sequentially to avoid rate limits...`);
 
     for (let i = 0; i < queue.length; i++) {
+      if (batchAbort.current) {
+        toast.warning(`Batch stopped after ${i}/${queue.length} assets.`);
+        break;
+      }
       toast.info(`[${i + 1}/${queue.length}] Generating ${queue[i]}...`);
       const success = await generateSingle(queue[i]);
 
       // Delay between calls to avoid rate limits
-      if (i < queue.length - 1) {
+      if (i < queue.length - 1 && !batchAbort.current) {
         await new Promise(r => setTimeout(r, success ? 3000 : 5000));
       }
     }
 
-    toast.success(`Batch complete. ${queue.length} assets processed.`);
+    setBatchRunning(false);
+    if (!batchAbort.current) {
+      toast.success(`Batch complete. ${queue.length} assets processed.`);
+    }
     setSelected(new Set());
+  };
+
+  const handleStopBatch = () => {
+    batchAbort.current = true;
+    toast.warning('Stopping batch after current asset finishes...');
   };
 
   const setQaStatus = async (assetKey: string, status: QaStatus) => {
