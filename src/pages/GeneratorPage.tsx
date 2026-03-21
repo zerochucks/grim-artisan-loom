@@ -38,6 +38,7 @@ const GeneratorPage = () => {
   const [compareAssets, setCompareAssets] = useState<GeneratedAsset[] | null>(null);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [animationPreset, setAnimationPreset] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<MercClassId | null>(null);
 
   const selectedPalette = BUILT_IN_PALETTES[paletteIndex];
   const currentAssetType = ASSET_TYPES.find((t) => t.id === assetType)!;
