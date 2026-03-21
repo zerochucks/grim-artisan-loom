@@ -20,6 +20,7 @@ export interface SpriteSpec {
   paletteHex:   string[];        // canonical palette
   unityPath:    string;          // Resources.Load path
   filterMode:   'Point' | 'Bilinear';
+  materialTag?: 'cloth' | 'metal' | 'organic' | 'stone'; // material hint for post-processing
 }
 
 export interface SpriteMetadata {
