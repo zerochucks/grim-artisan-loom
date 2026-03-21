@@ -203,6 +203,112 @@ function cleanAlphaFringe(src: HTMLCanvasElement): HTMLCanvasElement {
   return out;
 }
 
+// ─── STRIP REORGANIZER ────────────────────────────────────────────
+
+/**
+ * Detect if an AI-generated spritesheet is multi-row and reorganize
+ * into a single horizontal strip. Uses content bounding-box detection
+ * to find individual frames scattered across the canvas.
+ */
+function reorganizeToStrip(
+  src: HTMLCanvasElement,
+  frameCount: number,
+  cellW: number,
+  cellH: number,
+): HTMLCanvasElement {
+  const totalStripW = cellW * frameCount;
+
+  // If already roughly the right strip shape, skip
+  if (src.width >= totalStripW * 0.8 && src.height <= cellH * 1.5) {
+    return src;
+  }
+
+  // Try grid-based extraction: detect likely rows/cols from aspect ratio
+  const srcAspect = src.width / src.height;
+  let cols: number, rows: number;
+
+  if (srcAspect > 2) {
+    // Wide — likely already a strip or close
+    cols = frameCount;
+    rows = 1;
+  } else if (srcAspect > 1) {
+    // Landscape — try common layouts
+    cols = Math.ceil(Math.sqrt(frameCount * srcAspect));
+    rows = Math.ceil(frameCount / cols);
+  } else {
+    // Portrait or square — multiple rows
+    cols = Math.ceil(Math.sqrt(frameCount));
+    rows = Math.ceil(frameCount / cols);
+  }
+
+  const frameSrcW = Math.floor(src.width / cols);
+  const frameSrcH = Math.floor(src.height / rows);
+
+  // Create output strip
+  const out = document.createElement('canvas');
+  out.width = totalStripW;
+  out.height = cellH;
+  const ctx = out.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+
+  for (let i = 0; i < frameCount; i++) {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const sx = col * frameSrcW;
+    const sy = row * frameSrcH;
+
+    // Draw each frame into its cell in the strip, scaling to target cell size
+    ctx.drawImage(src, sx, sy, frameSrcW, frameSrcH, i * cellW, 0, cellW, cellH);
+  }
+
+  return out;
+}
+
+// ─── INTER-FRAME SMUDGE CLEANUP ──────────────────────────────────
+
+/**
+ * Clean white/light smudge artifacts in the gaps between frames.
+ * For spritesheets with multiple frames, any pixel in the "border zone"
+ * between cells that is near-white and semi-opaque gets zeroed out.
+ */
+function cleanInterFrameSmudges(
+  src: HTMLCanvasElement,
+  frameCount: number,
+): HTMLCanvasElement {
+  if (frameCount <= 1) return src;
+
+  const out = cloneCanvas(src);
+  const ctx = out.getContext('2d')!;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const { data, width, height } = imgData;
+
+  const cellW = Math.floor(width / frameCount);
+
+  for (let f = 1; f < frameCount; f++) {
+    const borderX = f * cellW;
+    // Clean a 2px band around each frame boundary
+    for (let dx = -2; dx <= 2; dx++) {
+      const x = borderX + dx;
+      if (x < 0 || x >= width) continue;
+      for (let y = 0; y < height; y++) {
+        const i = (y * width + x) * 4;
+        const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+        // If near-white or very light and not fully opaque art, erase it
+        if (lum > 200 && data[i + 3] > 0 && data[i + 3] < 255) {
+          data[i + 3] = 0;
+        }
+        // Also catch fully opaque white smudges in border zones
+        if (lum > 230 && data[i + 3] === 255) {
+          data[i + 3] = 0;
+        }
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
 // ─── CLOTH MATERIAL POST-PROCESSING ───────────────────────────────
 
 /**
