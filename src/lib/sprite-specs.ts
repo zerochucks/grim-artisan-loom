@@ -20,6 +20,7 @@ export interface SpriteSpec {
   paletteHex:   string[];        // canonical palette
   unityPath:    string;          // Resources.Load path
   filterMode:   'Point' | 'Bilinear';
+  materialTag?: 'cloth' | 'metal' | 'organic' | 'stone'; // material hint for post-processing
 }
 
 export interface SpriteMetadata {
@@ -57,6 +58,7 @@ function makeSpec(
   frameCount: number,
   ppu: number,
   unityFolder: string,
+  materialTag?: SpriteSpec['materialTag'],
 ): SpriteSpec {
   return {
     tier,
@@ -68,6 +70,7 @@ function makeSpec(
     paletteHex: tier === 'background' ? [] : [...PALETTE_24],
     unityPath: `${unityFolder}/${assetKey}`,
     filterMode: tier === 'background' ? 'Bilinear' : 'Point',
+    ...(materialTag ? { materialTag } : {}),
   };
 }
 
@@ -94,7 +97,7 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   icon_gold:         makeSpec('icon',       'icon_gold',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_rune:         makeSpec('icon',       'icon_rune',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_supply:       makeSpec('icon',       'icon_supply',       16,  16, 1, 16, 'Sprites/Icons'),
-  icon_bandage:      makeSpec('icon',       'icon_bandage',      16,  16, 1, 16, 'Sprites/Icons'),
+  icon_bandage:      makeSpec('icon',       'icon_bandage',      16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
 
   // ── Status effect icons (16×16) ────────────────────────────────
   icon_status_burning:       makeSpec('icon', 'icon_status_burning',       16, 16, 1, 16, 'Sprites/Icons'),
@@ -110,8 +113,8 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   // ── Resource / state icons ─────────────────────────────────────
   icon_stamina:              makeSpec('icon', 'icon_stamina',              16, 16, 1, 16, 'Sprites/Icons'),
   icon_hunger:               makeSpec('icon', 'icon_hunger',               16, 16, 1, 16, 'Sprites/Icons'),
-  icon_ration:               makeSpec('icon', 'icon_ration',               32, 32, 1, 16, 'Sprites/Icons'),
-  icon_provisions:           makeSpec('icon', 'icon_provisions',           32, 32, 1, 16, 'Sprites/Icons'),
+  icon_ration:               makeSpec('icon', 'icon_ration',               32, 32, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_provisions:           makeSpec('icon', 'icon_provisions',           32, 32, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_rest:                 makeSpec('icon', 'icon_rest',                 16, 16, 1, 16, 'Sprites/Icons'),
 
   // ── Injury markers (16×16) ─────────────────────────────────────
