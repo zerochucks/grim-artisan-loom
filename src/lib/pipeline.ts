@@ -289,6 +289,11 @@ export async function processSpriteAsset(
       if (spec.paletteHex.length > 0) {
         processed = paletteSnap(processed, spec.paletteHex);
       }
+      // Cloth material: sharpen contrast + warm cream tint before outline
+      if (spec.materialTag === 'cloth') {
+        processed = sharpenContrast(processed, 0.35);
+        processed = applyClothTint(processed, 0.15);
+      }
       processed = applyOutline(processed, '#0C0C14');
       break;
 
