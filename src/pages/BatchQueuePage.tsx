@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -54,6 +55,7 @@ const BatchQueuePage = () => {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
 
   const fetchAssets = useCallback(async () => {
     const { data, error } = await supabase
@@ -357,12 +359,30 @@ const BatchQueuePage = () => {
                   </td>
                   <td className="px-3 py-2">
                     {asset.storage_url ? (
-                      <img
-                        src={asset.storage_url}
-                        alt={asset.asset_key}
-                        className="h-8 border border-border bg-card"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
+                      <div className="flex items-center gap-1.5">
+                        <img
+                          src={asset.storage_url}
+                          alt={asset.asset_key}
+                          className="h-8 border border-border bg-card cursor-pointer hover:ring-1 hover:ring-primary transition-all"
+                          style={{ imageRendering: 'pixelated' }}
+                          onClick={() => setPreviewAsset(asset)}
+                          title="Click to enlarge"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
+                          title="Download"
+                          onClick={() => {
+                            const a = document.createElement('a');
+                            a.href = asset.storage_url!;
+                            a.download = `${asset.asset_key}.png`;
+                            a.click();
+                          }}
+                        >
+                          ⬇
+                        </Button>
+                      </div>
                     ) : (
                       <span className="text-muted-foreground text-[9px]">—</span>
                     )}
@@ -462,6 +482,94 @@ const BatchQueuePage = () => {
           </table>
         )}
       </div>
+      {/* Preview Modal */}
+      <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
+          {previewAsset && (
+            <>
+              <div className="flex items-center justify-between w-full">
+                <div>
+                  <h2 className="font-display text-sm tracking-widest text-primary">{previewAsset.asset_key}</h2>
+                  <p className="text-[10px] text-muted-foreground font-body">
+                    {previewAsset.tier} · {previewAsset.target_w}×{previewAsset.target_h} · {previewAsset.frame_count > 1 ? `${previewAsset.frame_count} frames` : 'static'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={`text-[9px] font-display tracking-wider ${STATUS_COLORS[previewAsset.qa_status] || ''}`}>
+                    {previewAsset.qa_status.toUpperCase()}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider"
+                    onClick={() => {
+                      const a = document.createElement('a');
+                      a.href = previewAsset.storage_url!;
+                      a.download = `${previewAsset.asset_key}.png`;
+                      a.click();
+                    }}
+                  >
+                    ⬇ DOWNLOAD
+                  </Button>
+                </div>
+              </div>
+              {previewAsset.storage_url && (
+                <div className="flex-1 flex items-center justify-center overflow-auto bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:16px_16px] rounded border border-border p-4 w-full">
+                  <img
+                    src={previewAsset.storage_url}
+                    alt={previewAsset.asset_key}
+                    className="max-w-full max-h-[70vh] object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </div>
+              )}
+              {previewAsset.prompt_template && (
+                <p className="text-[10px] text-muted-foreground font-body w-full">{previewAsset.prompt_template}</p>
+              )}
+              <div className="flex items-center gap-2 w-full justify-end">
+                {previewAsset.qa_status === 'generated' && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="text-[10px] font-display tracking-wider"
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'qa_pass'); setPreviewAsset(null); }}
+                    >
+                      ✓ QA PASS
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="text-[10px] font-display tracking-wider"
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); setPreviewAsset(null); }}
+                    >
+                      ✗ REJECT
+                    </Button>
+                  </>
+                )}
+                {previewAsset.qa_status === 'qa_pass' && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="text-[10px] font-display tracking-wider"
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'approved'); setPreviewAsset(null); }}
+                    >
+                      ✓ APPROVE
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="text-[10px] font-display tracking-wider"
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); setPreviewAsset(null); }}
+                    >
+                      ✗ REJECT
+                    </Button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
