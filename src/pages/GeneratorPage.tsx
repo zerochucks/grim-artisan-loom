@@ -16,6 +16,7 @@ import {
   type AssetTypeId, type StyleModifierId, type GeneratedAsset,
 } from '@/lib/forge-constants';
 import { ANIMATION_PRESETS, buildAnimationFramePrompt, buildAnimationSheet, type AnimationPreset } from '@/lib/animation-presets';
+import { type MercClassId } from '@/lib/class-system';
 import { useNavigate } from 'react-router-dom';
 
 const GeneratorPage = () => {
