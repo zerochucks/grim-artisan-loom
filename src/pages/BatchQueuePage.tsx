@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,8 @@ const BatchQueuePage = () => {
   const [assets, setAssets] = useState<SpriteAssetRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState<Set<string>>(new Set());
+  const [batchRunning, setBatchRunning] = useState(false);
+  const batchAbort = useRef(false);
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -166,20 +168,34 @@ const BatchQueuePage = () => {
       return;
     }
 
+    batchAbort.current = false;
+    setBatchRunning(true);
     toast.info(`Starting batch: ${queue.length} assets. Generating sequentially to avoid rate limits...`);
 
     for (let i = 0; i < queue.length; i++) {
+      if (batchAbort.current) {
+        toast.warning(`Batch stopped after ${i}/${queue.length} assets.`);
+        break;
+      }
       toast.info(`[${i + 1}/${queue.length}] Generating ${queue[i]}...`);
       const success = await generateSingle(queue[i]);
 
       // Delay between calls to avoid rate limits
-      if (i < queue.length - 1) {
+      if (i < queue.length - 1 && !batchAbort.current) {
         await new Promise(r => setTimeout(r, success ? 3000 : 5000));
       }
     }
 
-    toast.success(`Batch complete. ${queue.length} assets processed.`);
+    setBatchRunning(false);
+    if (!batchAbort.current) {
+      toast.success(`Batch complete. ${queue.length} assets processed.`);
+    }
     setSelected(new Set());
+  };
+
+  const handleStopBatch = () => {
+    batchAbort.current = true;
+    toast.warning('Stopping batch after current asset finishes...');
   };
 
   const setQaStatus = async (assetKey: string, status: QaStatus) => {
@@ -277,14 +293,25 @@ const BatchQueuePage = () => {
 
         <Button
           onClick={handleBatchGenerate}
-          disabled={selected.size === 0 || generating.size > 0}
+          disabled={selected.size === 0 || batchRunning}
           size="sm"
           className="text-[10px] font-display tracking-widest px-6"
         >
-          {generating.size > 0
+          {batchRunning
             ? `GENERATING (${generating.size})...`
             : `FORGE ${selected.size} SELECTED`}
         </Button>
+
+        {batchRunning && (
+          <Button
+            onClick={handleStopBatch}
+            variant="destructive"
+            size="sm"
+            className="text-[10px] font-display tracking-widest px-4"
+          >
+            STOP
+          </Button>
+        )}
       </div>
 
       {/* Table */}
