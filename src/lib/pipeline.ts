@@ -313,9 +313,8 @@ export async function processSpriteAsset(
       if (spec.materialTag === 'cloth') {
         processed = sharpenContrast(processed, 0.35);
         processed = applyClothTint(processed, 0.15);
-      }
+      processed = cleanAlphaFringe(processed);
       processed = applyOutline(processed, '#0C0C14');
-      break;
 
     default:
       processed = nearestNeighborDownscale(srcCanvas, spec.targetW, spec.targetH);
