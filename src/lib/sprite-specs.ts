@@ -58,6 +58,7 @@ function makeSpec(
   frameCount: number,
   ppu: number,
   unityFolder: string,
+  materialTag?: SpriteSpec['materialTag'],
 ): SpriteSpec {
   return {
     tier,
@@ -69,6 +70,7 @@ function makeSpec(
     paletteHex: tier === 'background' ? [] : [...PALETTE_24],
     unityPath: `${unityFolder}/${assetKey}`,
     filterMode: tier === 'background' ? 'Bilinear' : 'Point',
+    ...(materialTag ? { materialTag } : {}),
   };
 }
 
