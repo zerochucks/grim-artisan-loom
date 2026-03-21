@@ -219,7 +219,6 @@ function sharpenContrast(src: HTMLCanvasElement, strength: number = 0.35): HTMLC
     if (data[i + 3] < 128) continue;
     for (let c = 0; c < 3; c++) {
       const v = data[i + c] / 255;
-      // S-curve contrast: pushes values away from 0.5
       const curved = 0.5 + (v - 0.5) * (1 + strength) / (1 + strength * Math.abs(2 * (v - 0.5)));
       data[i + c] = Math.round(Math.max(0, Math.min(255, curved * 255)));
     }
@@ -231,8 +230,6 @@ function sharpenContrast(src: HTMLCanvasElement, strength: number = 0.35): HTMLC
 
 /**
  * Warm cream tint for cloth-type icons.
- * Blends existing color toward a target cream hue (#D4C9B0)
- * for non-outline, non-transparent pixels.
  */
 const CLOTH_TINT: [number, number, number] = [0xD4, 0xC9, 0xB0];
 
@@ -244,13 +241,67 @@ function applyClothTint(src: HTMLCanvasElement, blend: number = 0.15): HTMLCanva
 
   for (let i = 0; i < data.length; i += 4) {
     if (data[i + 3] < 128) continue;
-    // Skip very dark pixels (outlines / deep shadows)
     const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
     if (lum < 40) continue;
-
     data[i]     = Math.round(data[i]     + (CLOTH_TINT[0] - data[i])     * blend);
     data[i + 1] = Math.round(data[i + 1] + (CLOTH_TINT[1] - data[i + 1]) * blend);
     data[i + 2] = Math.round(data[i + 2] + (CLOTH_TINT[2] - data[i + 2]) * blend);
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
+// ─── METAL MATERIAL POST-PROCESSING ──────────────────────────────
+
+/**
+ * Cool blue-steel tint for metal/gear icons.
+ * Blends existing color toward a target steel-blue hue (#8A9BB0)
+ * for non-outline, non-transparent pixels.
+ */
+const METAL_TINT: [number, number, number] = [0x8A, 0x9B, 0xB0];
+
+function applyMetalTint(src: HTMLCanvasElement, blend: number = 0.18): HTMLCanvasElement {
+  const out = cloneCanvas(src);
+  const ctx = out.getContext('2d')!;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const { data } = imgData;
+
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue;
+    const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    if (lum < 30) continue; // preserve dark outlines/shadows
+    data[i]     = Math.round(data[i]     + (METAL_TINT[0] - data[i])     * blend);
+    data[i + 1] = Math.round(data[i + 1] + (METAL_TINT[1] - data[i + 1]) * blend);
+    data[i + 2] = Math.round(data[i + 2] + (METAL_TINT[2] - data[i + 2]) * blend);
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
+/**
+ * Specular highlight boost for metal icons.
+ * Brightens the top ~15% luminance pixels to simulate a specular edge catch,
+ * giving the oiled-steel look depth at small resolutions.
+ */
+function boostSpecularHighlights(src: HTMLCanvasElement, brightnessBump: number = 35, threshold: number = 0.70): HTMLCanvasElement {
+  const out = cloneCanvas(src);
+  const ctx = out.getContext('2d')!;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const { data } = imgData;
+
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue;
+    const lum = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255;
+    if (lum >= threshold) {
+      // Scale bump by how far above threshold — brightest pixels get full bump
+      const factor = (lum - threshold) / (1 - threshold);
+      const bump = Math.round(brightnessBump * factor);
+      data[i]     = Math.min(255, data[i] + bump);
+      data[i + 1] = Math.min(255, data[i + 1] + bump);
+      data[i + 2] = Math.min(255, data[i + 2] + bump);
+    }
   }
 
   ctx.putImageData(imgData, 0, 0);
