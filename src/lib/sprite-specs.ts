@@ -94,7 +94,8 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   portrait_warden:   makeSpec('portrait',   'portrait_warden',   48,  64, 1, 32, 'Sprites/Portraits'),
 
   // ── Icons (16×16) ──────────────────────────────────────────────
-  icon_gold:         makeSpec('icon',       'icon_gold',         16,  16, 1, 16, 'Sprites/Icons'),
+  icon_gold:         makeSpec('icon',       'icon_gold',         32,  32, 1, 16, 'Sprites/Icons', 'metal'),
+  icon_gold_sm:      makeSpec('icon',       'icon_gold_sm',      16,  16, 1, 16, 'Sprites/Icons', 'metal'),
   icon_rune:         makeSpec('icon',       'icon_rune',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_supply:       makeSpec('icon',       'icon_supply',       32,  32, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_supply_sm:    makeSpec('icon',       'icon_supply_sm',    16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
