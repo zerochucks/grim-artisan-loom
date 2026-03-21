@@ -50,6 +50,9 @@ export interface GeneratorSidebarProps {
   referenceImage: string | null;
   onReferenceUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearReference: () => void;
+  onClassSelect?: (classId: MercClassId | null) => void;
+  selectedClass?: MercClassId | null;
+  onPromptSuggest?: (prompt: string) => void;
 }
 
 export function GeneratorSidebar({
