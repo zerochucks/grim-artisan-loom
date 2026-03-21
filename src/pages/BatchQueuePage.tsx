@@ -249,6 +249,22 @@ const BatchQueuePage = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              const json = exportClassSystemJSON();
+              const blob = new Blob([json], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'class-system.json';
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success('CLASS SYSTEM EXPORTED.');
+            }}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            📦 EXPORT CLASSES
+          </button>
           <button onClick={() => navigate('/generator')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">FORGE</button>
           <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
           <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
