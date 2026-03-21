@@ -293,14 +293,25 @@ const BatchQueuePage = () => {
 
         <Button
           onClick={handleBatchGenerate}
-          disabled={selected.size === 0 || generating.size > 0}
+          disabled={selected.size === 0 || batchRunning}
           size="sm"
           className="text-[10px] font-display tracking-widest px-6"
         >
-          {generating.size > 0
+          {batchRunning
             ? `GENERATING (${generating.size})...`
             : `FORGE ${selected.size} SELECTED`}
         </Button>
+
+        {batchRunning && (
+          <Button
+            onClick={handleStopBatch}
+            variant="destructive"
+            size="sm"
+            className="text-[10px] font-display tracking-widest px-4"
+          >
+            STOP
+          </Button>
+        )}
       </div>
 
       {/* Table */}
