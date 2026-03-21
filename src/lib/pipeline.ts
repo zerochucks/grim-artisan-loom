@@ -181,6 +181,28 @@ function applyOutline(src: HTMLCanvasElement, outlineHex: string): HTMLCanvasEle
   return out;
 }
 
+// ─── ALPHA FRINGE CLEANUP ─────────────────────────────────────────
+
+/**
+ * Erode semi-transparent edge pixels to eliminate gray halos from AI output.
+ * Any pixel with alpha 1–127 is snapped to fully transparent (alpha 0).
+ */
+function cleanAlphaFringe(src: HTMLCanvasElement): HTMLCanvasElement {
+  const out = cloneCanvas(src);
+  const ctx = out.getContext('2d')!;
+  const imgData = ctx.getImageData(0, 0, out.width, out.height);
+  const { data } = imgData;
+
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 0 && data[i] < 128) {
+      data[i] = 0;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return out;
+}
+
 // ─── CLOTH MATERIAL POST-PROCESSING ───────────────────────────────
 
 /**
