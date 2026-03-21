@@ -342,18 +342,26 @@ export async function processSpriteAsset(
       }
       break;
 
-    case 'unit':
-      // Gemini outputs pixel art — NN downscale if needed, palette snap, outline
-      if (srcCanvas.width > spec.targetW * 1.5 || srcCanvas.height > spec.targetH * 1.5) {
-        processed = nearestNeighborDownscale(srcCanvas, spec.targetW, spec.targetH);
+    case 'unit': {
+      // If AI output is multi-row, reorganize into a single horizontal strip
+      const unitSrc = spec.frameCount > 1
+        ? reorganizeToStrip(srcCanvas, spec.frameCount, spec.targetW, spec.targetH)
+        : srcCanvas;
+      // NN downscale if needed, palette snap, outline
+      if (unitSrc.width > spec.targetW * 1.5 || unitSrc.height > spec.targetH * 1.5) {
+        processed = nearestNeighborDownscale(unitSrc, spec.targetW, spec.targetH);
       } else {
-        processed = cloneCanvas(srcCanvas);
+        processed = cloneCanvas(unitSrc);
       }
       if (spec.paletteHex.length > 0) {
         processed = paletteSnap(processed, spec.paletteHex);
       }
+      processed = cleanInterFrameSmudges(processed, spec.frameCount);
       processed = cleanAlphaFringe(processed);
       processed = applyOutline(processed, '#0C0C14');
+      break;
+    }
+
     case 'tile':
     case 'node':
       processed = nearestNeighborDownscale(srcCanvas, spec.targetW, spec.targetH);
@@ -371,9 +379,6 @@ export async function processSpriteAsset(
       }
       processed = cleanAlphaFringe(processed);
       processed = applyOutline(processed, '#0C0C14');
-      break;
-
-      processed = nearestNeighborDownscale(srcCanvas, spec.targetW, spec.targetH);
       break;
   }
 
