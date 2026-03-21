@@ -55,6 +55,7 @@ const BatchQueuePage = () => {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
 
   const fetchAssets = useCallback(async () => {
     const { data, error } = await supabase
