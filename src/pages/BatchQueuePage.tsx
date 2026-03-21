@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { exportClassSystemJSON } from '@/lib/class-system';
 
 interface SpriteAssetRow {
   id: string;
