@@ -345,6 +345,7 @@ const GeneratorPage = () => {
                 CLEAR A/B
               </button>
             )}
+            <button onClick={() => navigate('/batch')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">BATCH</button>
             <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
             <button onClick={() => navigate('/palettes')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">PALETTES</button>
             <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>

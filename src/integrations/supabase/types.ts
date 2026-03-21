@@ -150,6 +150,9 @@ export type Database = {
           frame_count: number
           id: string
           ppu: number
+          primary_color: string | null
+          prompt_template: string | null
+          qa_status: string
           storage_url: string | null
           target_h: number
           target_w: number
@@ -165,6 +168,9 @@ export type Database = {
           frame_count?: number
           id?: string
           ppu: number
+          primary_color?: string | null
+          prompt_template?: string | null
+          qa_status?: string
           storage_url?: string | null
           target_h: number
           target_w: number
@@ -180,6 +186,9 @@ export type Database = {
           frame_count?: number
           id?: string
           ppu?: number
+          primary_color?: string | null
+          prompt_template?: string | null
+          qa_status?: string
           storage_url?: string | null
           target_h?: number
           target_w?: number

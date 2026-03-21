@@ -10,6 +10,7 @@ import GeneratorPage from "./pages/GeneratorPage";
 import LibraryPage from "./pages/LibraryPage";
 import PaletteManagerPage from "./pages/PaletteManagerPage";
 import NotFound from "./pages/NotFound";
+import BatchQueuePage from "./pages/BatchQueuePage";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/generator" element={<ProtectedRoute><GeneratorPage /></ProtectedRoute>} />
             <Route path="/library" element={<ProtectedRoute><LibraryPage /></ProtectedRoute>} />
             <Route path="/palettes" element={<ProtectedRoute><PaletteManagerPage /></ProtectedRoute>} />
+            <Route path="/batch" element={<ProtectedRoute><BatchQueuePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

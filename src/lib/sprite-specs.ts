@@ -96,13 +96,67 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   icon_supply:       makeSpec('icon',       'icon_supply',       16,  16, 1, 16, 'Sprites/Icons'),
   icon_bandage:      makeSpec('icon',       'icon_bandage',      16,  16, 1, 16, 'Sprites/Icons'),
 
+  // ── Status effect icons (16×16) ────────────────────────────────
+  icon_status_burning:       makeSpec('icon', 'icon_status_burning',       16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_poisoned:      makeSpec('icon', 'icon_status_poisoned',      16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_stunned:       makeSpec('icon', 'icon_status_stunned',       16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_slowed:        makeSpec('icon', 'icon_status_slowed',        16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_strengthened:  makeSpec('icon', 'icon_status_strengthened',  16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_shielded:      makeSpec('icon', 'icon_status_shielded',      16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_regenerating:  makeSpec('icon', 'icon_status_regenerating',  16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_blinded:       makeSpec('icon', 'icon_status_blinded',       16, 16, 1, 16, 'Sprites/Icons'),
+  icon_status_cursed:        makeSpec('icon', 'icon_status_cursed',        16, 16, 1, 16, 'Sprites/Icons'),
+
+  // ── Injury markers (16×16) ─────────────────────────────────────
+  injury_light:    makeSpec('icon', 'injury_light',    16, 16, 1, 16, 'Sprites/Icons'),
+  injury_serious:  makeSpec('icon', 'injury_serious',  16, 16, 1, 16, 'Sprites/Icons'),
+  injury_critical: makeSpec('icon', 'injury_critical', 16, 16, 1, 16, 'Sprites/Icons'),
+
   // ── Backgrounds (high-res, no palette snap) ────────────────────
   bg_guildhall:      makeSpec('background', 'bg_guildhall',      960, 540, 1, 1, 'Sprites/Backgrounds'),
   bg_office:         makeSpec('background', 'bg_office',         960, 540, 1, 1, 'Sprites/Backgrounds'),
 
   // ── Tiles ──────────────────────────────────────────────────────
-  tile_stone_floor:  makeSpec('tile',       'tile_stone_floor',  32,  32, 1, 32, 'Sprites/Tiles'),
-  tile_wood_floor:   makeSpec('tile',       'tile_wood_floor',   32,  32, 1, 32, 'Sprites/Tiles'),
+  tile_stone_floor:  makeSpec('tile', 'tile_stone_floor',  32, 32, 1, 32, 'Sprites/Tiles'),
+  tile_wood_floor:   makeSpec('tile', 'tile_wood_floor',   32, 32, 1, 32, 'Sprites/Tiles'),
+  tile_floor:        makeSpec('tile', 'tile_floor',        16, 16, 1, 16, 'Sprites/Tiles'),
+  tile_floor_alt:    makeSpec('tile', 'tile_floor_alt',    16, 16, 1, 16, 'Sprites/Tiles'),
+  tile_wall:         makeSpec('tile', 'tile_wall',         16, 16, 1, 16, 'Sprites/Tiles'),
+  tile_lava:         makeSpec('tile', 'tile_lava',         32, 16, 2, 16, 'Sprites/Tiles'),
+  tile_poison:       makeSpec('tile', 'tile_poison',       32, 16, 2, 16, 'Sprites/Tiles'),
+  tile_unstable:     makeSpec('tile', 'tile_unstable',     16, 16, 1, 16, 'Sprites/Tiles'),
+  tile_highground:   makeSpec('tile', 'tile_highground',   16, 16, 1, 16, 'Sprites/Tiles'),
+
+  // ── Node icons (24×24) ─────────────────────────────────────────
+  node_fight:    makeSpec('node', 'node_fight',    24, 24, 1, 24, 'Sprites/Nodes'),
+  node_elite:    makeSpec('node', 'node_elite',    24, 24, 1, 24, 'Sprites/Nodes'),
+  node_boss:     makeSpec('node', 'node_boss',     24, 24, 1, 24, 'Sprites/Nodes'),
+  node_loot:     makeSpec('node', 'node_loot',     24, 24, 1, 24, 'Sprites/Nodes'),
+  node_rest:     makeSpec('node', 'node_rest',     24, 24, 1, 24, 'Sprites/Nodes'),
+  node_mystery:  makeSpec('node', 'node_mystery',  24, 24, 1, 24, 'Sprites/Nodes'),
+
+  // ── Building upgrade icons (24×24) ─────────────────────────────
+  upgrade_infirmary:       makeSpec('node', 'upgrade_infirmary',       24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_quartermaster:   makeSpec('node', 'upgrade_quartermaster',   24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_rune_forge:      makeSpec('node', 'upgrade_rune_forge',      24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_library:         makeSpec('node', 'upgrade_library',         24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_chapel:          makeSpec('node', 'upgrade_chapel',          24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_training_grounds: makeSpec('node', 'upgrade_training_grounds', 24, 24, 1, 24, 'Sprites/UI'),
+
+  // ── Faction emblems (24×24) ────────────────────────────────────
+  emblem_crown:      makeSpec('node', 'emblem_crown',      24, 24, 1, 24, 'Sprites/UI'),
+  emblem_registrar:  makeSpec('node', 'emblem_registrar',  24, 24, 1, 24, 'Sprites/UI'),
+  emblem_black_hand: makeSpec('node', 'emblem_black_hand', 24, 24, 1, 24, 'Sprites/UI'),
+  emblem_void:       makeSpec('node', 'emblem_void',       24, 24, 1, 24, 'Sprites/UI'),
+
+  // ── Gear slot icons (24×24) ────────────────────────────────────
+  slot_head:     makeSpec('node', 'slot_head',     24, 24, 1, 24, 'Sprites/UI'),
+  slot_chest:    makeSpec('node', 'slot_chest',    24, 24, 1, 24, 'Sprites/UI'),
+  slot_hands:    makeSpec('node', 'slot_hands',    24, 24, 1, 24, 'Sprites/UI'),
+  slot_legs:     makeSpec('node', 'slot_legs',     24, 24, 1, 24, 'Sprites/UI'),
+  slot_feet:     makeSpec('node', 'slot_feet',     24, 24, 1, 24, 'Sprites/UI'),
+  slot_weapon:   makeSpec('node', 'slot_weapon',   24, 24, 1, 24, 'Sprites/UI'),
+  slot_offhand:  makeSpec('node', 'slot_offhand',  24, 24, 1, 24, 'Sprites/UI'),
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────
