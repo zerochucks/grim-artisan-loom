@@ -64,6 +64,7 @@ export function GeneratorSidebar({
   generationMode, onGenerationModeChange,
   animationPreset, onAnimationPresetChange,
   referenceImage, onReferenceUpload, onClearReference,
+  onClassSelect, selectedClass, onPromptSuggest,
 }: GeneratorSidebarProps) {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<StyleRecipe[]>([]);
