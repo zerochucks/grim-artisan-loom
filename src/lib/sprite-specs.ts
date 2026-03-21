@@ -107,6 +107,13 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   icon_status_blinded:       makeSpec('icon', 'icon_status_blinded',       16, 16, 1, 16, 'Sprites/Icons'),
   icon_status_cursed:        makeSpec('icon', 'icon_status_cursed',        16, 16, 1, 16, 'Sprites/Icons'),
 
+  // ── Resource / state icons ─────────────────────────────────────
+  icon_stamina:              makeSpec('icon', 'icon_stamina',              16, 16, 1, 16, 'Sprites/Icons'),
+  icon_hunger:               makeSpec('icon', 'icon_hunger',               16, 16, 1, 16, 'Sprites/Icons'),
+  icon_ration:               makeSpec('icon', 'icon_ration',               32, 32, 1, 16, 'Sprites/Icons'),
+  icon_provisions:           makeSpec('icon', 'icon_provisions',           32, 32, 1, 16, 'Sprites/Icons'),
+  icon_rest:                 makeSpec('icon', 'icon_rest',                 16, 16, 1, 16, 'Sprites/Icons'),
+
   // ── Injury markers (16×16) ─────────────────────────────────────
   injury_light:    makeSpec('icon', 'injury_light',    16, 16, 1, 16, 'Sprites/Icons'),
   injury_serious:  makeSpec('icon', 'injury_serious',  16, 16, 1, 16, 'Sprites/Icons'),
