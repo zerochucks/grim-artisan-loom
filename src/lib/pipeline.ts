@@ -200,10 +200,12 @@ export async function processSpriteAsset(
   let processed: HTMLCanvasElement;
 
   switch (spec.tier) {
-    case 'background':
-      // Bilinear only — preserve photorealism
-      processed = bilinearDownscale(srcCanvas, spec.targetW, spec.targetH);
+    case 'background': {
+      // Crop letterbox bars (Gemini cinematic artifact), then bilinear downscale
+      const cropped = cropLetterbox(srcCanvas);
+      processed = bilinearDownscale(cropped, spec.targetW, spec.targetH);
       break;
+    }
 
     case 'portrait':
       // Cascaded bilinear → NN → palette snap
