@@ -301,10 +301,8 @@ export async function processSpriteAsset(
       if (spec.paletteHex.length > 0) {
         processed = paletteSnap(processed, spec.paletteHex);
       }
+      processed = cleanAlphaFringe(processed);
       processed = applyOutline(processed, '#0C0C14');
-      break;
-
-    case 'icon':
     case 'tile':
     case 'node':
       processed = nearestNeighborDownscale(srcCanvas, spec.targetW, spec.targetH);
