@@ -79,7 +79,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-3-pro-image-preview",
-        messages: [{ role: "user", content: messageContent.length === 1 ? messageContent[0] : messageContent }],
+        messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
         modalities: ["image", "text"],
       }),
     });
