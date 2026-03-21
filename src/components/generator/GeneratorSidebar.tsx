@@ -4,6 +4,7 @@ import {
   type AssetTypeId, type StyleModifierId,
 } from '@/lib/forge-constants';
 import { ANIMATION_PRESETS } from '@/lib/animation-presets';
+import { CLASS_DEFS, type MercClassId } from '@/lib/class-system';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,9 @@ export interface GeneratorSidebarProps {
   referenceImage: string | null;
   onReferenceUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearReference: () => void;
+  onClassSelect?: (classId: MercClassId | null) => void;
+  selectedClass?: MercClassId | null;
+  onPromptSuggest?: (prompt: string) => void;
 }
 
 export function GeneratorSidebar({
@@ -60,6 +64,7 @@ export function GeneratorSidebar({
   generationMode, onGenerationModeChange,
   animationPreset, onAnimationPresetChange,
   referenceImage, onReferenceUpload, onClearReference,
+  onClassSelect, selectedClass, onPromptSuggest,
 }: GeneratorSidebarProps) {
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<StyleRecipe[]>([]);
@@ -129,9 +134,75 @@ export function GeneratorSidebar({
 
   const applicableAnimations = ANIMATION_PRESETS.filter(p => p.assetTypes.includes(assetType));
 
+  const handleClassSelect = (classId: MercClassId) => {
+    if (selectedClass === classId) {
+      onClassSelect?.(null);
+      return;
+    }
+    onClassSelect?.(classId);
+    const classDef = CLASS_DEFS[classId];
+    onAssetTypeChange('character');
+    onWidthChange(32);
+    onHeightChange(32);
+    onGenerationModeChange('render');
+
+    const promptMap: Record<MercClassId, string> = {
+      fighter: 'Armored footsoldier with short sword and buckler, battle-worn leather and chainmail, determined stance, grimdark fantasy',
+      rogue: 'Hooded rogue with twin daggers, dark leather armor, crouching ready stance, shadow motif, grimdark fantasy',
+      ranger: 'Scout with shortbow and quiver, weathered cloak and hood, alert watchful pose, grimdark fantasy',
+      mage: 'Robed arcanist with glowing staff, arcane runes on cloth wrappings, mystical pose, grimdark fantasy',
+      cleric: 'Field medic in heavy cloth and light mail, bandage satchel and mace, resolute stance, grimdark fantasy',
+      warden: 'Heavy plate knight with kite shield and hand axe, red surcoat, immovable stance, heraldic emblem on shield, grimdark fantasy',
+    };
+
+    onPromptSuggest?.(promptMap[classId]);
+    toast.success(`${classDef.label.toUpperCase()} SELECTED — ${classDef.loreName}. Settings auto-configured.`);
+  };
+
+  const CLASS_ICONS: Record<MercClassId, string> = {
+    fighter: '⚔️', rogue: '🗡️', ranger: '🏹', mage: '🔮', cleric: '✚', warden: '🛡️',
+  };
+
   return (
     <div className="w-[260px] border-r border-border bg-card overflow-y-auto flex-shrink-0">
       <div className="p-3 space-y-4">
+        {/* Class Picker */}
+        <Section title="CLASS">
+          <div className="grid grid-cols-3 gap-1">
+            {(Object.keys(CLASS_DEFS) as MercClassId[]).map((classId) => {
+              const def = CLASS_DEFS[classId];
+              return (
+                <button
+                  key={classId}
+                  onClick={() => handleClassSelect(classId)}
+                  className={`text-left px-2 py-1.5 text-[10px] font-body border transition-colors ${
+                    selectedClass === classId
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-muted/50 text-muted-foreground hover:border-accent'
+                  }`}
+                >
+                  <span className="mr-0.5">{CLASS_ICONS[classId]}</span>
+                  {def.label}
+                </button>
+              );
+            })}
+          </div>
+          {selectedClass && (
+            <div className="mt-2 p-2 border border-border bg-muted/30 space-y-1">
+              <p className="text-[10px] text-accent font-display tracking-widest">{CLASS_DEFS[selectedClass].loreName}</p>
+              <p className="text-[9px] text-muted-foreground">
+                Move {CLASS_DEFS[selectedClass].stats.move} · Range {CLASS_DEFS[selectedClass].stats.atkRange} · {CLASS_DEFS[selectedClass].stats.note}
+              </p>
+              <p className="text-[9px] text-foreground">
+                <span className="text-accent">P:</span> {CLASS_DEFS[selectedClass].passive.label} — {CLASS_DEFS[selectedClass].passive.description}
+              </p>
+              <p className="text-[9px] text-foreground">
+                <span className="text-primary">A:</span> {CLASS_DEFS[selectedClass].active.label} — {CLASS_DEFS[selectedClass].active.description}
+              </p>
+            </div>
+          )}
+        </Section>
+
         {/* Asset Type */}
         <Section title="ASSET TYPE">
           <div className="grid grid-cols-2 gap-1">

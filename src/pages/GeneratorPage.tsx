@@ -16,6 +16,7 @@ import {
   type AssetTypeId, type StyleModifierId, type GeneratedAsset,
 } from '@/lib/forge-constants';
 import { ANIMATION_PRESETS, buildAnimationFramePrompt, buildAnimationSheet, type AnimationPreset } from '@/lib/animation-presets';
+import { type MercClassId } from '@/lib/class-system';
 import { useNavigate } from 'react-router-dom';
 
 const GeneratorPage = () => {
@@ -37,6 +38,7 @@ const GeneratorPage = () => {
   const [compareAssets, setCompareAssets] = useState<GeneratedAsset[] | null>(null);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [animationPreset, setAnimationPreset] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<MercClassId | null>(null);
 
   const selectedPalette = BUILT_IN_PALETTES[paletteIndex];
   const currentAssetType = ASSET_TYPES.find((t) => t.id === assetType)!;
@@ -334,6 +336,9 @@ const GeneratorPage = () => {
         referenceImage={referenceImage}
         onReferenceUpload={handleReferenceUpload}
         onClearReference={() => setReferenceImage(null)}
+        selectedClass={selectedClass}
+        onClassSelect={setSelectedClass}
+        onPromptSuggest={(p) => setPrompt(p)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
