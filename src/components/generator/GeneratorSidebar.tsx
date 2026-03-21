@@ -4,6 +4,7 @@ import {
   type AssetTypeId, type StyleModifierId,
 } from '@/lib/forge-constants';
 import { ANIMATION_PRESETS } from '@/lib/animation-presets';
+import { CLASS_DEFS, type MercClassId } from '@/lib/class-system';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
