@@ -7,7 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { renderGrid, postProcessRender, generateAssetName } from '@/lib/canvas-utils';
+import { renderGrid, generateAssetName } from '@/lib/canvas-utils';
+import { processAdHoc } from '@/lib/pipeline';
+import { inferTier } from '@/lib/sprite-specs';
 import {
   ASSET_TYPES, BUILT_IN_PALETTES, EXAMPLE_PROMPTS,
   SCENE_PIECES, SCENE_EXAMPLE_PROMPT,
