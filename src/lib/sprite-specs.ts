@@ -142,35 +142,35 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   tile_highground:   makeSpec('tile', 'tile_highground',   16, 16, 1, 16, 'Sprites/Tiles'),
 
   // ── Node icons (24×24) ─────────────────────────────────────────
-  node_fight:    makeSpec('node', 'node_fight',    24, 24, 1, 24, 'Sprites/Nodes'),
-  node_elite:    makeSpec('node', 'node_elite',    24, 24, 1, 24, 'Sprites/Nodes'),
-  node_boss:     makeSpec('node', 'node_boss',     24, 24, 1, 24, 'Sprites/Nodes'),
+  node_fight:    makeSpec('node', 'node_fight',    24, 24, 1, 24, 'Sprites/Nodes', 'metal'),
+  node_elite:    makeSpec('node', 'node_elite',    24, 24, 1, 24, 'Sprites/Nodes', 'metal'),
+  node_boss:     makeSpec('node', 'node_boss',     24, 24, 1, 24, 'Sprites/Nodes', 'metal'),
   node_loot:     makeSpec('node', 'node_loot',     24, 24, 1, 24, 'Sprites/Nodes'),
   node_rest:     makeSpec('node', 'node_rest',     24, 24, 1, 24, 'Sprites/Nodes'),
   node_mystery:  makeSpec('node', 'node_mystery',  24, 24, 1, 24, 'Sprites/Nodes'),
 
   // ── Building upgrade icons (24×24) ─────────────────────────────
   upgrade_infirmary:       makeSpec('node', 'upgrade_infirmary',       24, 24, 1, 24, 'Sprites/UI'),
-  upgrade_quartermaster:   makeSpec('node', 'upgrade_quartermaster',   24, 24, 1, 24, 'Sprites/UI'),
-  upgrade_rune_forge:      makeSpec('node', 'upgrade_rune_forge',      24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_quartermaster:   makeSpec('node', 'upgrade_quartermaster',   24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  upgrade_rune_forge:      makeSpec('node', 'upgrade_rune_forge',      24, 24, 1, 24, 'Sprites/UI', 'metal'),
   upgrade_library:         makeSpec('node', 'upgrade_library',         24, 24, 1, 24, 'Sprites/UI'),
   upgrade_chapel:          makeSpec('node', 'upgrade_chapel',          24, 24, 1, 24, 'Sprites/UI'),
-  upgrade_training_grounds: makeSpec('node', 'upgrade_training_grounds', 24, 24, 1, 24, 'Sprites/UI'),
+  upgrade_training_grounds: makeSpec('node', 'upgrade_training_grounds', 24, 24, 1, 24, 'Sprites/UI', 'metal'),
 
   // ── Faction emblems (24×24) ────────────────────────────────────
-  emblem_crown:      makeSpec('node', 'emblem_crown',      24, 24, 1, 24, 'Sprites/UI'),
-  emblem_registrar:  makeSpec('node', 'emblem_registrar',  24, 24, 1, 24, 'Sprites/UI'),
-  emblem_black_hand: makeSpec('node', 'emblem_black_hand', 24, 24, 1, 24, 'Sprites/UI'),
+  emblem_crown:      makeSpec('node', 'emblem_crown',      24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  emblem_registrar:  makeSpec('node', 'emblem_registrar',  24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  emblem_black_hand: makeSpec('node', 'emblem_black_hand', 24, 24, 1, 24, 'Sprites/UI', 'metal'),
   emblem_void:       makeSpec('node', 'emblem_void',       24, 24, 1, 24, 'Sprites/UI'),
 
   // ── Gear slot icons (24×24) ────────────────────────────────────
-  slot_head:     makeSpec('node', 'slot_head',     24, 24, 1, 24, 'Sprites/UI'),
-  slot_chest:    makeSpec('node', 'slot_chest',    24, 24, 1, 24, 'Sprites/UI'),
-  slot_hands:    makeSpec('node', 'slot_hands',    24, 24, 1, 24, 'Sprites/UI'),
-  slot_legs:     makeSpec('node', 'slot_legs',     24, 24, 1, 24, 'Sprites/UI'),
-  slot_feet:     makeSpec('node', 'slot_feet',     24, 24, 1, 24, 'Sprites/UI'),
-  slot_weapon:   makeSpec('node', 'slot_weapon',   24, 24, 1, 24, 'Sprites/UI'),
-  slot_offhand:  makeSpec('node', 'slot_offhand',  24, 24, 1, 24, 'Sprites/UI'),
+  slot_head:     makeSpec('node', 'slot_head',     24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_chest:    makeSpec('node', 'slot_chest',    24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_hands:    makeSpec('node', 'slot_hands',    24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_legs:     makeSpec('node', 'slot_legs',     24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_feet:     makeSpec('node', 'slot_feet',     24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_weapon:   makeSpec('node', 'slot_weapon',   24, 24, 1, 24, 'Sprites/UI', 'metal'),
+  slot_offhand:  makeSpec('node', 'slot_offhand',  24, 24, 1, 24, 'Sprites/UI', 'metal'),
 };
 
 // ─── HELPERS ──────────────────────────────────────────────────────
