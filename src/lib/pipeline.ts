@@ -360,10 +360,14 @@ export async function processSpriteAsset(
       if (spec.paletteHex.length > 0) {
         processed = paletteSnap(processed, spec.paletteHex);
       }
-      // Cloth material: sharpen contrast + warm cream tint before outline
+      // Material-specific post-processing before outline
       if (spec.materialTag === 'cloth') {
         processed = sharpenContrast(processed, 0.35);
         processed = applyClothTint(processed, 0.15);
+      } else if (spec.materialTag === 'metal') {
+        processed = sharpenContrast(processed, 0.40);
+        processed = applyMetalTint(processed, 0.18);
+        processed = boostSpecularHighlights(processed, 35, 0.70);
       }
       processed = cleanAlphaFringe(processed);
       processed = applyOutline(processed, '#0C0C14');
