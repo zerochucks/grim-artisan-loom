@@ -97,7 +97,8 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   icon_gold:         makeSpec('icon',       'icon_gold',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_rune:         makeSpec('icon',       'icon_rune',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_supply:       makeSpec('icon',       'icon_supply',       16,  16, 1, 16, 'Sprites/Icons'),
-  icon_bandage:      makeSpec('icon',       'icon_bandage',      16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_bandage:      makeSpec('icon',       'icon_bandage',      32,  32, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_bandage_sm:   makeSpec('icon',       'icon_bandage_sm',   16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
 
   // ── Status effect icons (16×16) ────────────────────────────────
   icon_status_burning:       makeSpec('icon', 'icon_status_burning',       16, 16, 1, 16, 'Sprites/Icons'),
