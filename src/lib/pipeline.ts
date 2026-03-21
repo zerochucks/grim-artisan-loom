@@ -28,6 +28,57 @@ function findNearest(r: number, g: number, b: number, palette: [number, number, 
   return best;
 }
 
+// ─── LETTERBOX CROP ───────────────────────────────────────────────
+
+/**
+ * Detect and crop black letterbox bars (top/bottom and left/right).
+ * Scans rows/cols for near-black average brightness and trims them.
+ * Threshold: a row/col is "black" if avg luminance < 8 (out of 255).
+ */
+function cropLetterbox(src: HTMLCanvasElement, threshold: number = 8): HTMLCanvasElement {
+  const ctx = src.getContext('2d')!;
+  const { width, height } = src;
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const { data } = imgData;
+
+  const rowAvgLum = (y: number): number => {
+    let sum = 0;
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      sum += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    }
+    return sum / width;
+  };
+
+  const colAvgLum = (x: number): number => {
+    let sum = 0;
+    for (let y = 0; y < height; y++) {
+      const i = (y * width + x) * 4;
+      sum += data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    }
+    return sum / height;
+  };
+
+  let top = 0, bottom = height - 1, left = 0, right = width - 1;
+
+  while (top < bottom && rowAvgLum(top) < threshold) top++;
+  while (bottom > top && rowAvgLum(bottom) < threshold) bottom--;
+  while (left < right && colAvgLum(left) < threshold) left++;
+  while (right > left && colAvgLum(right) < threshold) right--;
+
+  const cropW = right - left + 1;
+  const cropH = bottom - top + 1;
+
+  // No significant crop detected — return original
+  if (cropW >= width - 2 && cropH >= height - 2) return src;
+
+  const out = document.createElement('canvas');
+  out.width = cropW;
+  out.height = cropH;
+  out.getContext('2d')!.drawImage(src, left, top, cropW, cropH, 0, 0, cropW, cropH);
+  return out;
+}
+
 // ─── CANVAS HELPERS ───────────────────────────────────────────────
 
 function cloneCanvas(src: HTMLCanvasElement): HTMLCanvasElement {
@@ -149,10 +200,12 @@ export async function processSpriteAsset(
   let processed: HTMLCanvasElement;
 
   switch (spec.tier) {
-    case 'background':
-      // Bilinear only — preserve photorealism
-      processed = bilinearDownscale(srcCanvas, spec.targetW, spec.targetH);
+    case 'background': {
+      // Crop letterbox bars (Gemini cinematic artifact), then bilinear downscale
+      const cropped = cropLetterbox(srcCanvas);
+      processed = bilinearDownscale(cropped, spec.targetW, spec.targetH);
       break;
+    }
 
     case 'portrait':
       // Cascaded bilinear → NN → palette snap
