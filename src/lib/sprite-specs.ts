@@ -96,7 +96,8 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   // ── Icons (16×16) ──────────────────────────────────────────────
   icon_gold:         makeSpec('icon',       'icon_gold',         16,  16, 1, 16, 'Sprites/Icons'),
   icon_rune:         makeSpec('icon',       'icon_rune',         16,  16, 1, 16, 'Sprites/Icons'),
-  icon_supply:       makeSpec('icon',       'icon_supply',       16,  16, 1, 16, 'Sprites/Icons'),
+  icon_supply:       makeSpec('icon',       'icon_supply',       32,  32, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_supply_sm:    makeSpec('icon',       'icon_supply_sm',    16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_bandage:      makeSpec('icon',       'icon_bandage',      32,  32, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_bandage_sm:   makeSpec('icon',       'icon_bandage_sm',   16,  16, 1, 16, 'Sprites/Icons', 'cloth'),
 
@@ -115,7 +116,9 @@ export const SPRITE_SPECS: Record<string, SpriteSpec> = {
   icon_stamina:              makeSpec('icon', 'icon_stamina',              16, 16, 1, 16, 'Sprites/Icons'),
   icon_hunger:               makeSpec('icon', 'icon_hunger',               16, 16, 1, 16, 'Sprites/Icons'),
   icon_ration:               makeSpec('icon', 'icon_ration',               32, 32, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_ration_sm:            makeSpec('icon', 'icon_ration_sm',            16, 16, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_provisions:           makeSpec('icon', 'icon_provisions',           32, 32, 1, 16, 'Sprites/Icons', 'cloth'),
+  icon_provisions_sm:        makeSpec('icon', 'icon_provisions_sm',        16, 16, 1, 16, 'Sprites/Icons', 'cloth'),
   icon_rest:                 makeSpec('icon', 'icon_rest',                 16, 16, 1, 16, 'Sprites/Icons'),
 
   // ── Injury markers (16×16) ─────────────────────────────────────
