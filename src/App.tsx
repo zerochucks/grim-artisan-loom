@@ -10,6 +10,7 @@ import GeneratorPage from "./pages/GeneratorPage";
 import LibraryPage from "./pages/LibraryPage";
 import PaletteManagerPage from "./pages/PaletteManagerPage";
 import NotFound from "./pages/NotFound";
+import BatchQueuePage from "./pages/BatchQueuePage";
 
 const queryClient = new QueryClient();
 
