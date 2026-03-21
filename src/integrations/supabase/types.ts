@@ -155,6 +155,7 @@ export type Database = {
           target_w: number
           tier: string
           unity_path: string
+          user_id: string | null
         }
         Insert: {
           approved?: boolean
@@ -169,6 +170,7 @@ export type Database = {
           target_w: number
           tier: string
           unity_path: string
+          user_id?: string | null
         }
         Update: {
           approved?: boolean
@@ -183,6 +185,7 @@ export type Database = {
           target_w?: number
           tier?: string
           unity_path?: string
+          user_id?: string | null
         }
         Relationships: []
       }
