@@ -141,6 +141,54 @@ export type Database = {
           },
         ]
       }
+      sprite_assets: {
+        Row: {
+          approved: boolean
+          asset_key: string
+          created_at: string | null
+          filter_mode: string
+          frame_count: number
+          id: string
+          ppu: number
+          storage_url: string | null
+          target_h: number
+          target_w: number
+          tier: string
+          unity_path: string
+          user_id: string | null
+        }
+        Insert: {
+          approved?: boolean
+          asset_key: string
+          created_at?: string | null
+          filter_mode?: string
+          frame_count?: number
+          id?: string
+          ppu: number
+          storage_url?: string | null
+          target_h: number
+          target_w: number
+          tier: string
+          unity_path: string
+          user_id?: string | null
+        }
+        Update: {
+          approved?: boolean
+          asset_key?: string
+          created_at?: string | null
+          filter_mode?: string
+          frame_count?: number
+          id?: string
+          ppu?: number
+          storage_url?: string | null
+          target_h?: number
+          target_w?: number
+          tier?: string
+          unity_path?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       style_recipes: {
         Row: {
           created_at: string

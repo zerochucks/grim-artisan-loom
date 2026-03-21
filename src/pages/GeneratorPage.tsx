@@ -7,7 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { renderGrid, postProcessRender, generateAssetName } from '@/lib/canvas-utils';
+import { renderGrid, generateAssetName } from '@/lib/canvas-utils';
+import { processAdHoc } from '@/lib/pipeline';
+import { inferTier } from '@/lib/sprite-specs';
 import {
   ASSET_TYPES, BUILT_IN_PALETTES, EXAMPLE_PROMPTS,
   SCENE_PIECES, SCENE_EXAMPLE_PROMPT,
@@ -47,14 +49,16 @@ const GeneratorPage = () => {
     h: number,
     refImage?: string | null,
   ) => {
+    const tier = inferTier(assetTypeId, w, h);
     const body: Record<string, unknown> = {
       prompt: assetPrompt,
       assetType: assetTypeId,
       width: w,
       height: h,
+      tier,
       paletteDescription: `${selectedPalette.name} palette: ${selectedPalette.colors.join(', ')}`,
       styleModifiers: modifiers,
-      skipQuantize: true,
+      skipQuantize: tier === 'background',
     };
     if (refImage) {
       body.referenceImage = refImage;
@@ -65,8 +69,8 @@ const GeneratorPage = () => {
     if (error) throw new Error(error.message || 'Generation failed');
     if (data?.error) throw new Error(data.error);
 
-    const shouldSkipQuantize = data.skipQuantize ?? true;
-    return postProcessRender(data.image, w, h, selectedPalette.colors, shouldSkipQuantize);
+    const skipQuantize = data.skipQuantize ?? (tier === 'background');
+    return processAdHoc(data.image, assetTypeId, w, h, selectedPalette.colors, skipQuantize);
   }, [selectedPalette, modifiers]);
 
   const handleGenerate = useCallback(async () => {
