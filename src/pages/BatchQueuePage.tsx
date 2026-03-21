@@ -52,6 +52,8 @@ const BatchQueuePage = () => {
   const [assets, setAssets] = useState<SpriteAssetRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState<Set<string>>(new Set());
+  const [batchRunning, setBatchRunning] = useState(false);
+  const batchAbort = useRef(false);
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
