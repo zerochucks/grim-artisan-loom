@@ -221,6 +221,119 @@ const BatchQueuePage = () => {
     toast.success(`${assetKey} → ${status.toUpperCase()}`);
   };
 
+  const parseCSVRow = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') { inQuotes = false; }
+        else { current += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { result.push(current); current = ''; }
+        else { current += ch; }
+      }
+    }
+    result.push(current);
+    return result;
+  };
+
+  const handleDownloadCSV = () => {
+    const headers = ['asset_key', 'tier', 'unity_path', 'target_w', 'target_h', 'frame_count', 'ppu', 'filter_mode', 'qa_status', 'prompt_template', 'primary_color'];
+    const rows = assets.map(a =>
+      headers.map(h => {
+        const val = (a as any)[h];
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        return str.includes(',') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      }).join(',')
+    );
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sprite-assets-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${assets.length} rows as CSV`);
+  };
+
+  const handleUploadCSV = async (file: File) => {
+    const text = await file.text();
+    const lines = text.split('\n').filter(l => l.trim());
+    if (lines.length < 2) {
+      toast.error('CSV must have a header row and at least one data row');
+      return;
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const keyIdx = headers.indexOf('asset_key');
+    if (keyIdx === -1) {
+      toast.error('CSV must contain an "asset_key" column');
+      return;
+    }
+
+    const updatableFields = ['tier', 'unity_path', 'target_w', 'target_h', 'frame_count', 'ppu', 'filter_mode', 'prompt_template', 'primary_color'];
+    const existingKeys = new Set(assets.map(a => a.asset_key));
+
+    let updated = 0;
+    let skipped = 0;
+    const errors: string[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const row = parseCSVRow(lines[i]);
+      if (row.length < headers.length) continue;
+
+      const assetKey = row[keyIdx]?.trim();
+      if (!assetKey || !existingKeys.has(assetKey)) {
+        skipped++;
+        continue;
+      }
+
+      const updateData: Record<string, unknown> = {};
+      for (const field of updatableFields) {
+        const idx = headers.indexOf(field);
+        if (idx === -1) continue;
+        const val = row[idx]?.trim();
+        if (val === '' || val === undefined) continue;
+
+        if (['target_w', 'target_h', 'frame_count', 'ppu'].includes(field)) {
+          const num = parseInt(val, 10);
+          if (!isNaN(num)) updateData[field] = num;
+        } else {
+          updateData[field] = val;
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) continue;
+
+      const { error } = await supabase
+        .from('sprite_assets')
+        .update(updateData)
+        .eq('asset_key', assetKey);
+
+      if (error) {
+        errors.push(`${assetKey}: ${error.message}`);
+      } else {
+        updated++;
+      }
+    }
+
+    await fetchAssets();
+    toast.success(`Updated ${updated} rows. ${skipped} skipped (not in DB).`);
+    if (errors.length > 0) {
+      toast.error(`${errors.length} errors: ${errors.slice(0, 3).join('; ')}`);
+    }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const filteredAssets = getFilteredAssets();
   const tiers = [...new Set(assets.map(a => a.tier))].sort();
   const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
