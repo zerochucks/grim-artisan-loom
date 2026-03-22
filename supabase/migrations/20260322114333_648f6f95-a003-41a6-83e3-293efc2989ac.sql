@@ -1,0 +1,1 @@
+ALTER TABLE public.sprite_assets ADD CONSTRAINT sprite_assets_asset_key_unique UNIQUE (asset_key);
