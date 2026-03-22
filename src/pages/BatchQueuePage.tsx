@@ -378,6 +378,31 @@ const BatchQueuePage = () => {
           >
             📦 EXPORT CLASSES
           </button>
+          <button
+            onClick={handleDownloadCSV}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            ⬇ DOWNLOAD CSV
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            ⬆ UPLOAD CSV
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleUploadCSV(file);
+                e.target.value = '';
+              }
+            }}
+          />
           <button onClick={() => navigate('/generator')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">FORGE</button>
           <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
           <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
