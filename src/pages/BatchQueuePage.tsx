@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportClassSystemJSON } from '@/lib/class-system';
+import JSZip from 'jszip';
 
 interface SpriteAssetRow {
   id: string;
@@ -332,6 +333,47 @@ const BatchQueuePage = () => {
     }
   };
 
+  const handleDownloadAllZip = async () => {
+    const downloadable = assets.filter(
+      a => a.storage_url && ['generated', 'qa_pass', 'approved'].includes(a.qa_status)
+    );
+    if (downloadable.length === 0) {
+      toast.error('NO GENERATED ASSETS TO DOWNLOAD.');
+      return;
+    }
+    toast.info(`PACKAGING ${downloadable.length} ASSETS...`);
+    const zip = new JSZip();
+
+    for (const asset of downloadable) {
+      const url = asset.storage_url!;
+      try {
+        // Reconstruct folder structure from unity_path
+        const pathParts = asset.unity_path.replace(/^Assets\//, '');
+        if (url.startsWith('data:')) {
+          const base64 = url.split(',')[1];
+          if (base64) zip.file(pathParts, base64, { base64: true });
+        } else {
+          const resp = await fetch(url);
+          if (resp.ok) {
+            const blob = await resp.blob();
+            zip.file(pathParts, blob);
+          }
+        }
+      } catch (e) {
+        console.error(`Failed to add ${asset.asset_key}:`, e);
+      }
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const dlUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'riftdivers-assets.zip';
+    link.href = dlUrl;
+    link.click();
+    URL.revokeObjectURL(dlUrl);
+    toast.success(`ZIP DISPATCHED — ${downloadable.length} ASSETS.`);
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAssets = getFilteredAssets();
@@ -403,6 +445,12 @@ const BatchQueuePage = () => {
               }
             }}
           />
+          <button
+            onClick={handleDownloadAllZip}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            📥 DOWNLOAD ZIP
+          </button>
           <button onClick={() => navigate('/generator')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">FORGE</button>
           <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
           <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
