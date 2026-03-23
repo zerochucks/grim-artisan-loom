@@ -445,6 +445,12 @@ const BatchQueuePage = () => {
               }
             }}
           />
+          <button
+            onClick={handleDownloadAllZip}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            📥 DOWNLOAD ZIP
+          </button>
           <button onClick={() => navigate('/generator')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">FORGE</button>
           <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
           <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
