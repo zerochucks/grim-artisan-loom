@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportClassSystemJSON } from '@/lib/class-system';
+import JSZip from 'jszip';
 
 interface SpriteAssetRow {
   id: string;
