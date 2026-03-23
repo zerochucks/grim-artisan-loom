@@ -225,6 +225,30 @@ const BatchQueuePage = () => {
     toast.success(`${assetKey} → ${status.toUpperCase()}`);
   };
 
+  const handleSavePrompt = async () => {
+    if (!editingAsset) return;
+    const { error } = await supabase
+      .from('sprite_assets')
+      .update({ prompt_template: editPrompt })
+      .eq('asset_key', editingAsset.asset_key);
+
+    if (error) {
+      toast.error(`Failed to save prompt: ${error.message}`);
+      return;
+    }
+
+    setAssets(prev => prev.map(a =>
+      a.asset_key === editingAsset.asset_key ? { ...a, prompt_template: editPrompt } : a
+    ));
+    toast.success(`Prompt updated for ${editingAsset.asset_key}`);
+    setEditingAsset(null);
+  };
+
+  const openEditPrompt = (asset: SpriteAssetRow) => {
+    setEditingAsset(asset);
+    setEditPrompt(asset.prompt_template || '');
+  };
+
   const parseCSVRow = (line: string): string[] => {
     const result: string[] = [];
     let current = '';
