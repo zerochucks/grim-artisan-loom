@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportClassSystemJSON } from '@/lib/class-system';
@@ -60,6 +61,8 @@ const BatchQueuePage = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
+  const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
+  const [editPrompt, setEditPrompt] = useState('');
 
   const fetchAssets = useCallback(async () => {
     const { data, error } = await supabase
@@ -220,6 +223,30 @@ const BatchQueuePage = () => {
     ));
 
     toast.success(`${assetKey} → ${status.toUpperCase()}`);
+  };
+
+  const handleSavePrompt = async () => {
+    if (!editingAsset) return;
+    const { error } = await supabase
+      .from('sprite_assets')
+      .update({ prompt_template: editPrompt })
+      .eq('asset_key', editingAsset.asset_key);
+
+    if (error) {
+      toast.error(`Failed to save prompt: ${error.message}`);
+      return;
+    }
+
+    setAssets(prev => prev.map(a =>
+      a.asset_key === editingAsset.asset_key ? { ...a, prompt_template: editPrompt } : a
+    ));
+    toast.success(`Prompt updated for ${editingAsset.asset_key}`);
+    setEditingAsset(null);
+  };
+
+  const openEditPrompt = (asset: SpriteAssetRow) => {
+    setEditingAsset(asset);
+    setEditPrompt(asset.prompt_template || '');
   };
 
   const parseCSVRow = (line: string): string[] => {
@@ -618,93 +645,104 @@ const BatchQueuePage = () => {
                     )}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1">
-                      {/* Generate button */}
-                      {(asset.qa_status === 'pending' || asset.qa_status === 'rejected') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 px-2 text-[9px] font-display tracking-wider"
-                          disabled={generating.has(asset.asset_key) || !asset.prompt_template}
-                          onClick={() => generateSingle(asset.asset_key)}
-                        >
-                          {generating.has(asset.asset_key) ? '...' : '⚒️'}
-                        </Button>
-                      )}
+                     <div className="flex items-center gap-1">
+                       {/* Edit prompt button — always available */}
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
+                         title="Edit prompt"
+                         onClick={() => openEditPrompt(asset)}
+                       >
+                         ✏️
+                       </Button>
 
-                      {/* QA Pass */}
-                      {asset.qa_status === 'generated' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-400 border-emerald-800 hover:bg-emerald-900/30"
-                            onClick={() => setQaStatus(asset.asset_key, 'qa_pass')}
-                          >
-                            ✓ QA
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
-                            onClick={() => setQaStatus(asset.asset_key, 'rejected')}
-                          >
-                            ✗
-                          </Button>
-                        </>
-                      )}
+                       {/* Generate button */}
+                       {(asset.qa_status === 'pending' || asset.qa_status === 'rejected') && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="h-6 px-2 text-[9px] font-display tracking-wider"
+                           disabled={generating.has(asset.asset_key) || !asset.prompt_template}
+                           onClick={() => generateSingle(asset.asset_key)}
+                         >
+                           {generating.has(asset.asset_key) ? '...' : '⚒️'}
+                         </Button>
+                       )}
 
-                      {/* Approve */}
-                      {asset.qa_status === 'qa_pass' && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-300 border-emerald-700 hover:bg-emerald-900/40"
-                            onClick={() => setQaStatus(asset.asset_key, 'approved')}
-                          >
-                            ✓ APPROVE
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
-                            onClick={() => setQaStatus(asset.asset_key, 'rejected')}
-                          >
-                            ✗
-                          </Button>
-                        </>
-                      )}
+                       {/* QA Pass */}
+                       {asset.qa_status === 'generated' && (
+                         <>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-400 border-emerald-800 hover:bg-emerald-900/30"
+                             onClick={() => setQaStatus(asset.asset_key, 'qa_pass')}
+                           >
+                             ✓ QA
+                           </Button>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
+                             onClick={() => setQaStatus(asset.asset_key, 'rejected')}
+                           >
+                             ✗
+                           </Button>
+                         </>
+                       )}
 
-                      {/* Approved — show label + regenerate option */}
-                      {asset.qa_status === 'approved' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-[9px] font-display tracking-wider text-muted-foreground hover:text-accent"
-                          onClick={() => {
-                            if (confirm(`Re-generate ${asset.asset_key}? This will overwrite the approved version.`)) {
-                              setQaStatus(asset.asset_key, 'pending');
-                            }
-                          }}
-                        >
-                          ↻
-                        </Button>
-                      )}
+                       {/* Approve */}
+                       {asset.qa_status === 'qa_pass' && (
+                         <>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-300 border-emerald-700 hover:bg-emerald-900/40"
+                             onClick={() => setQaStatus(asset.asset_key, 'approved')}
+                           >
+                             ✓ APPROVE
+                           </Button>
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
+                             onClick={() => setQaStatus(asset.asset_key, 'rejected')}
+                           >
+                             ✗
+                           </Button>
+                         </>
+                       )}
 
-                      {/* Rejected — regenerate */}
-                      {asset.qa_status === 'rejected' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 px-2 text-[9px] font-display tracking-wider"
-                          disabled={generating.has(asset.asset_key)}
-                          onClick={() => generateSingle(asset.asset_key)}
-                        >
-                          ↻ RETRY
-                        </Button>
-                      )}
-                    </div>
+                       {/* Approved — show label + regenerate option */}
+                       {asset.qa_status === 'approved' && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           className="h-6 px-2 text-[9px] font-display tracking-wider text-muted-foreground hover:text-accent"
+                           onClick={() => {
+                             if (confirm(`Re-generate ${asset.asset_key}? This will overwrite the approved version.`)) {
+                               setQaStatus(asset.asset_key, 'pending');
+                             }
+                           }}
+                         >
+                           ↻
+                         </Button>
+                       )}
+
+                       {/* Rejected — regenerate */}
+                       {asset.qa_status === 'rejected' && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="h-6 px-2 text-[9px] font-display tracking-wider"
+                           disabled={generating.has(asset.asset_key)}
+                           onClick={() => generateSingle(asset.asset_key)}
+                         >
+                           ↻ RETRY
+                         </Button>
+                       )}
+                     </div>
                   </td>
                 </tr>
               ))}
@@ -715,6 +753,8 @@ const BatchQueuePage = () => {
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
+          <DialogTitle className="sr-only">Asset Preview</DialogTitle>
+          <DialogDescription className="sr-only">Preview and QA the selected asset</DialogDescription>
           {previewAsset && (
             <>
               <div className="flex items-center justify-between w-full">
@@ -757,6 +797,14 @@ const BatchQueuePage = () => {
                 <p className="text-[10px] text-muted-foreground font-body w-full">{previewAsset.prompt_template}</p>
               )}
               <div className="flex items-center gap-2 w-full justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] font-display tracking-wider"
+                  onClick={() => { openEditPrompt(previewAsset); setPreviewAsset(null); }}
+                >
+                  ✏️ EDIT PROMPT
+                </Button>
                 {previewAsset.qa_status === 'generated' && (
                   <>
                     <Button
@@ -797,6 +845,64 @@ const BatchQueuePage = () => {
                 )}
               </div>
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Prompt Modal */}
+      <Dialog open={!!editingAsset} onOpenChange={(open) => !open && setEditingAsset(null)}>
+        <DialogContent className="max-w-2xl bg-card border-border p-6">
+          <DialogTitle className="font-display text-sm tracking-widest text-primary">
+            EDIT PROMPT — {editingAsset?.asset_key}
+          </DialogTitle>
+          <DialogDescription className="text-[10px] text-muted-foreground font-body">
+            {editingAsset?.tier} · {editingAsset?.target_w}×{editingAsset?.target_h}
+            {editingAsset?.qa_status === 'rejected' && ' · Previously rejected — refine and re-generate.'}
+          </DialogDescription>
+          {editingAsset && (
+            <div className="flex flex-col gap-4 mt-2">
+              {editingAsset.storage_url && (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={editingAsset.storage_url}
+                    alt={editingAsset.asset_key}
+                    className="h-16 border border-border bg-card"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <Badge variant="outline" className={`text-[9px] font-display tracking-wider ${STATUS_COLORS[editingAsset.qa_status] || ''}`}>
+                    {editingAsset.qa_status.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
+              <Textarea
+                value={editPrompt}
+                onChange={(e) => setEditPrompt(e.target.value)}
+                className="min-h-[200px] text-xs font-body bg-muted border-border resize-y"
+                placeholder="Enter the prompt template for this asset..."
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-muted-foreground font-body">
+                  {editPrompt.length} chars
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider"
+                    onClick={() => setEditingAsset(null)}
+                  >
+                    CANCEL
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider px-6"
+                    onClick={handleSavePrompt}
+                  >
+                    SAVE PROMPT
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
