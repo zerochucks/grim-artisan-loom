@@ -1,0 +1,1 @@
+CREATE POLICY "Public read access on pixel-assets" ON storage.objects FOR SELECT TO public USING (bucket_id = 'pixel-assets');
