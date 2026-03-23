@@ -848,6 +848,64 @@ const BatchQueuePage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Prompt Modal */}
+      <Dialog open={!!editingAsset} onOpenChange={(open) => !open && setEditingAsset(null)}>
+        <DialogContent className="max-w-2xl bg-card border-border p-6">
+          <DialogTitle className="font-display text-sm tracking-widest text-primary">
+            EDIT PROMPT — {editingAsset?.asset_key}
+          </DialogTitle>
+          <DialogDescription className="text-[10px] text-muted-foreground font-body">
+            {editingAsset?.tier} · {editingAsset?.target_w}×{editingAsset?.target_h}
+            {editingAsset?.qa_status === 'rejected' && ' · Previously rejected — refine and re-generate.'}
+          </DialogDescription>
+          {editingAsset && (
+            <div className="flex flex-col gap-4 mt-2">
+              {editingAsset.storage_url && (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={editingAsset.storage_url}
+                    alt={editingAsset.asset_key}
+                    className="h-16 border border-border bg-card"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <Badge variant="outline" className={`text-[9px] font-display tracking-wider ${STATUS_COLORS[editingAsset.qa_status] || ''}`}>
+                    {editingAsset.qa_status.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
+              <Textarea
+                value={editPrompt}
+                onChange={(e) => setEditPrompt(e.target.value)}
+                className="min-h-[200px] text-xs font-body bg-muted border-border resize-y"
+                placeholder="Enter the prompt template for this asset..."
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-muted-foreground font-body">
+                  {editPrompt.length} chars
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider"
+                    onClick={() => setEditingAsset(null)}
+                  >
+                    CANCEL
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider px-6"
+                    onClick={handleSavePrompt}
+                  >
+                    SAVE PROMPT
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
