@@ -1,0 +1,1 @@
+CREATE POLICY "Authenticated can upload to pixel-assets" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pixel-assets');
