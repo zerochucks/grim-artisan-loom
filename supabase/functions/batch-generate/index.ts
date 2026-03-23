@@ -105,11 +105,34 @@ serve(async (req) => {
       });
     }
 
-    // Update the sprite_asset with the generated image and set qa_status to 'generated'
+    // Upload image to storage instead of storing base64 in DB
+    const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
+    const mimeMatch = imageBase64.match(/^data:(image\/\w+);/);
+    const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+    const ext = mimeType === "image/jpeg" ? "jpg" : "png";
+    const filePath = `${asset_key}.${ext}`;
+
+    const binaryStr = atob(base64Data);
+    const bytes = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+    const { error: uploadErr } = await supabase.storage
+      .from("pixel-assets")
+      .upload(filePath, bytes, { contentType: mimeType, upsert: true });
+
+    if (uploadErr) {
+      console.error("Storage upload error:", uploadErr);
+      throw new Error("Failed to upload image to storage");
+    }
+
+    const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(filePath);
+    const publicUrl = urlData.publicUrl;
+
+    // Update the sprite_asset with storage URL and set qa_status to 'generated'
     const { error: updateErr } = await supabase
       .from("sprite_assets")
       .update({
-        storage_url: imageBase64,
+        storage_url: publicUrl,
         qa_status: "generated",
         user_id: user.id,
       })
@@ -124,7 +147,7 @@ serve(async (req) => {
       success: true,
       asset_key,
       tier: spec.tier,
-      image: imageBase64,
+      image: publicUrl,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
