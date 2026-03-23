@@ -753,6 +753,8 @@ const BatchQueuePage = () => {
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
+          <DialogTitle className="sr-only">Asset Preview</DialogTitle>
+          <DialogDescription className="sr-only">Preview and QA the selected asset</DialogDescription>
           {previewAsset && (
             <>
               <div className="flex items-center justify-between w-full">
@@ -795,6 +797,14 @@ const BatchQueuePage = () => {
                 <p className="text-[10px] text-muted-foreground font-body w-full">{previewAsset.prompt_template}</p>
               )}
               <div className="flex items-center gap-2 w-full justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] font-display tracking-wider"
+                  onClick={() => { openEditPrompt(previewAsset); setPreviewAsset(null); }}
+                >
+                  ✏️ EDIT PROMPT
+                </Button>
                 {previewAsset.qa_status === 'generated' && (
                   <>
                     <Button
