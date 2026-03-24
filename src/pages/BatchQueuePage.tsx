@@ -143,11 +143,12 @@ const BatchQueuePage = () => {
         return false;
       }
 
+      const retries = data?.retries ?? 0;
       setAssets(prev => prev.map(a =>
         a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: data.image } : a
       ));
 
-      toast.success(`${assetKey} generated`);
+      toast.success(`${assetKey} generated${retries > 0 ? ` (${retries} retry${retries > 1 ? 'ies' : ''})` : ''}`);
       return true;
     } catch (err: any) {
       toast.error(`${assetKey} failed: ${err.message}`);
