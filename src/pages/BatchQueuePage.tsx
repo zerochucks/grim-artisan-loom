@@ -34,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-muted text-muted-foreground',
   queued: 'bg-secondary text-secondary-foreground',
   generating: 'bg-accent text-accent-foreground animate-pulse',
+  retrying: 'bg-amber-900/40 text-amber-400 animate-pulse',
   generated: 'bg-primary/20 text-primary',
   qa_pass: 'bg-emerald-900/40 text-emerald-400',
   approved: 'bg-emerald-900/60 text-emerald-300',
