@@ -96,6 +96,7 @@ serve(async (req) => {
 
       // Retry on transient gateway errors
       if (response.status >= 502 && response.status <= 504 && attempt < 2) {
+        retryCount = attempt + 1;
         const waitMs = (attempt + 1) * 3000;
         console.warn(`[batch] Attempt ${attempt + 1} got ${response.status}, retrying in ${waitMs}ms...`);
         await new Promise(r => setTimeout(r, waitMs));
