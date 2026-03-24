@@ -71,28 +71,43 @@ serve(async (req) => {
 
     console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h})`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
-        messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
-        modalities: ["image", "text"],
-      }),
-    });
+    // Retry up to 3 times for transient errors (502, 503, 504)
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-pro-image-preview",
+          messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
+          modalities: ["image", "text"],
+        }),
+      });
 
-    if (!response.ok) {
-      const status = response.status;
-      const text = await response.text();
-      console.error("AI gateway error:", status, text);
-      if (status === 429) {
+      if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited. Wait and retry.", retryable: true }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Retry on transient gateway errors
+      if (response.status >= 502 && response.status <= 504 && attempt < 2) {
+        const waitMs = (attempt + 1) * 3000;
+        console.warn(`[batch] Attempt ${attempt + 1} got ${response.status}, retrying in ${waitMs}ms...`);
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+
+      break;
+    }
+
+    if (!response || !response.ok) {
+      const status = response?.status ?? 0;
+      const text = response ? await response.text() : "No response";
+      console.error("AI gateway error:", status, text);
       throw new Error(`AI gateway returned ${status}`);
     }
 
