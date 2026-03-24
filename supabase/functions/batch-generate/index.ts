@@ -73,6 +73,7 @@ serve(async (req) => {
 
     // Retry up to 3 times for transient errors (502, 503, 504)
     let response: Response | null = null;
+    let retryCount = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
