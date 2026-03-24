@@ -34,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-muted text-muted-foreground',
   queued: 'bg-secondary text-secondary-foreground',
   generating: 'bg-accent text-accent-foreground animate-pulse',
+  retrying: 'bg-amber-900/40 text-amber-400 animate-pulse',
   generated: 'bg-primary/20 text-primary',
   qa_pass: 'bg-emerald-900/40 text-emerald-400',
   approved: 'bg-emerald-900/60 text-emerald-300',
@@ -55,6 +56,7 @@ const BatchQueuePage = () => {
   const [assets, setAssets] = useState<SpriteAssetRow[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState<Set<string>>(new Set());
+  const [retrying, setRetrying] = useState<Map<string, number>>(new Map());
   const [batchRunning, setBatchRunning] = useState(false);
   const batchAbort = useRef(false);
   const [filterTier, setFilterTier] = useState<string>('all');
@@ -141,11 +143,12 @@ const BatchQueuePage = () => {
         return false;
       }
 
+      const retries = data?.retries ?? 0;
       setAssets(prev => prev.map(a =>
         a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: data.image } : a
       ));
 
-      toast.success(`${assetKey} generated`);
+      toast.success(`${assetKey} generated${retries > 0 ? ` (${retries} retry${retries > 1 ? 'ies' : ''})` : ''}`);
       return true;
     } catch (err: any) {
       toast.error(`${assetKey} failed: ${err.message}`);

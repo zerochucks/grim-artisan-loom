@@ -73,6 +73,7 @@ serve(async (req) => {
 
     // Retry up to 3 times for transient errors (502, 503, 504)
     let response: Response | null = null;
+    let retryCount = 0;
     for (let attempt = 0; attempt < 3; attempt++) {
       response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -95,6 +96,7 @@ serve(async (req) => {
 
       // Retry on transient gateway errors
       if (response.status >= 502 && response.status <= 504 && attempt < 2) {
+        retryCount = attempt + 1;
         const waitMs = (attempt + 1) * 3000;
         console.warn(`[batch] Attempt ${attempt + 1} got ${response.status}, retrying in ${waitMs}ms...`);
         await new Promise(r => setTimeout(r, waitMs));
@@ -163,6 +165,7 @@ serve(async (req) => {
       asset_key,
       tier: spec.tier,
       image: publicUrl,
+      retries: retryCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
