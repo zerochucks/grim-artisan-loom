@@ -165,6 +165,7 @@ serve(async (req) => {
       asset_key,
       tier: spec.tier,
       image: publicUrl,
+      retries: retryCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
