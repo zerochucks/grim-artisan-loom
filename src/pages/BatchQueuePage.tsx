@@ -65,21 +65,31 @@ const BatchQueuePage = () => {
   const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const PAGE_SIZE = 100;
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchAssets = useCallback(async () => {
-    const { data, error } = await supabase
+    setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error, count } = await supabase
       .from('sprite_assets')
-      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at')
+      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
       .order('tier')
-      .order('asset_key');
+      .order('asset_key')
+      .range(from, to);
 
     if (error) {
       toast.error(`Failed to load assets: ${error.message}`);
+      setLoading(false);
       return;
     }
     setAssets((data as unknown as SpriteAssetRow[]) || []);
+    if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, []);
+  }, [page]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
