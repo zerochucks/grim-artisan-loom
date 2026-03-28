@@ -69,7 +69,7 @@ const BatchQueuePage = () => {
   const fetchAssets = useCallback(async () => {
     const { data, error } = await supabase
       .from('sprite_assets')
-      .select('*')
+      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at')
       .order('tier')
       .order('asset_key');
 
