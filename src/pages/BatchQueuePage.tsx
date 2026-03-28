@@ -420,8 +420,10 @@ const BatchQueuePage = () => {
   const tiers = [...new Set(assets.map(a => a.tier))].sort();
   const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   const stats = {
-    total: assets.length,
+    total: totalCount,
     pending: assets.filter(a => a.qa_status === 'pending').length,
     generated: assets.filter(a => a.qa_status === 'generated').length,
     approved: assets.filter(a => a.qa_status === 'approved').length,
