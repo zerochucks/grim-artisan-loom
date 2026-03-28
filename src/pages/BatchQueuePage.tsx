@@ -65,21 +65,31 @@ const BatchQueuePage = () => {
   const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const PAGE_SIZE = 100;
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchAssets = useCallback(async () => {
-    const { data, error } = await supabase
+    setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error, count } = await supabase
       .from('sprite_assets')
-      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at')
+      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
       .order('tier')
-      .order('asset_key');
+      .order('asset_key')
+      .range(from, to);
 
     if (error) {
       toast.error(`Failed to load assets: ${error.message}`);
+      setLoading(false);
       return;
     }
     setAssets((data as unknown as SpriteAssetRow[]) || []);
+    if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, []);
+  }, [page]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
@@ -410,8 +420,10 @@ const BatchQueuePage = () => {
   const tiers = [...new Set(assets.map(a => a.tier))].sort();
   const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   const stats = {
-    total: assets.length,
+    total: totalCount,
     pending: assets.filter(a => a.qa_status === 'pending').length,
     generated: assets.filter(a => a.qa_status === 'generated').length,
     approved: assets.filter(a => a.qa_status === 'approved').length,
@@ -753,6 +765,54 @@ const BatchQueuePage = () => {
           </table>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border px-4 py-2">
+          <span className="text-[10px] font-body text-muted-foreground">
+            Page {page + 1} of {totalPages} · Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page === 0}
+              onClick={() => setPage(0)}
+            >
+              ⟨⟨ FIRST
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+            >
+              ⟨ PREV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              NEXT ⟩
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(totalPages - 1)}
+            >
+              LAST ⟩⟩
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
