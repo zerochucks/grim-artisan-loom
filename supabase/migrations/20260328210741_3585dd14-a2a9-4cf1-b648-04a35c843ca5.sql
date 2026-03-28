@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_sprite_assets_tier_key ON public.sprite_assets (tier, asset_key);
