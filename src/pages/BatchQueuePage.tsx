@@ -765,6 +765,54 @@ const BatchQueuePage = () => {
           </table>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-border px-4 py-2">
+          <span className="text-[10px] font-body text-muted-foreground">
+            Page {page + 1} of {totalPages} · Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page === 0}
+              onClick={() => setPage(0)}
+            >
+              ⟨⟨ FIRST
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+            >
+              ⟨ PREV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              NEXT ⟩
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] font-display tracking-wider"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(totalPages - 1)}
+            >
+              LAST ⟩⟩
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
