@@ -7,48 +7,169 @@ const corsHeaders = {
 
 // ─── TYPES ────────────────────────────────────────────────────────
 
-type AssetTier = "background" | "portrait" | "unit" | "icon" | "tile" | "node";
+type AssetTier = "background" | "portrait" | "unit" | "icon" | "tile" | "node" | "ui" | "vfx" | "font" | "logo";
 
-// ─── BRAND CORE (self-contained for edge deployment) ──────────────
+// ─── PIPELINE DETECTION ──────────────────────────────────────────
+// Pipeline A = non-pixel (ink-and-gold illustration): background, portrait, logo
+// Pipeline B = pixel art: unit, icon, tile, node, ui, vfx, font
+
+const PIXEL_TIERS: AssetTier[] = ["unit", "icon", "tile", "node", "ui", "vfx", "font"];
+const INK_TIERS: AssetTier[] = ["background", "portrait", "logo"];
+
+function isPixelTier(tier: AssetTier): boolean {
+  return PIXEL_TIERS.includes(tier);
+}
+
+// ─── SHARED BRAND IDENTITY ──────────────────────────────────────
 
 const BRAND_IDENTITY =
   "Grimdark low-fantasy, morally-gray, gritty, weathered, lived-in. Inspired by Stoneshard, Darkest Dungeon, Kingdom Death. Late medieval / early renaissance. Never clean, never heroic, never sci-fi.";
 
+// ─── PIPELINE A: INK-AND-GOLD HEADER ────────────────────────────
+
+const INK_HEADER = `Style: dark fantasy ink-and-gold illustration, dramatic rim lighting, heavy ink linework.
+Muted palette dominated by charcoal, obsidian-black, ash-grey with controlled warm accents (amber, gold).
+Painterly rendering with visible brushwork — NOT pixel art, NOT vector, NOT flat digital.
+Cinematic photorealism for backgrounds; stylized realism for portraits.`;
+
+// ─── PIPELINE B: PIXEL ART HEADER (identical on every pixel asset) ─
+
+const PIXEL_HEADER = `Style: grimdark low-fantasy pixel art, high-contrast readability at 1x scale.
+Hard pixel edges ONLY — no anti-aliasing, no blur, no soft shading, no painterly texture.
+No photorealism, no dithering noise that harms readability.
+1px outline in near-black (#0C0C14) unless otherwise specified.
+Zero alpha bleed on transparent assets (clean cutout, no semi-transparent fringe pixels).
+Palette: muted materials (iron/steel/leather/bone/parchment) + controlled accent glow only from primary_color when provided.
+Lighting: simple top-left key + one shadow value. Avoid complex volumetric lighting in pixel assets.`;
+
+// ─── MATERIAL DICTIONARY (consistent world feel) ────────────────
+
+const MATERIAL_DICT = `Material Dictionary (use ONLY these unless asset explicitly overrides):
+- Metals: gunmetal, tarnished iron, dull steel highlights — NO chrome, NO polished silver
+- Leather: cracked, oil-darkened, sweat-stained, visible grain and stitching
+- Fabric: coarse linen, wool, heavy canvas, frayed edges — NEVER silk
+- Parchment: warm aged paper, tea-stained, subtle grain (pixel-safe flat shading)
+- Bone/Ivory: yellowed, micro-chipped, dry — NOT white
+- Wood: dark oak, weathered pine, worm-eaten, visible grain
+- Stone: rough-hewn, lichen-spotted, mortar-cracked
+- Void energy: electric violet (#7C4DFF) accents, controlled glow — avoid neon gradients
+- Jade/Ledger: #32C882 accents, limited bloom
+- Shadows: deep indigo / near-black — NOT pure black everywhere`;
+
+// ─── LIGHTING RULES ─────────────────────────────────────────────
+
 const LIGHTING = {
   key: "warm torchlight / candlelight, directional from upper-left, golden-amber temperature",
-  rim: "cold cyan-blue rim light along ONE consistent edge (right side preferred), brighter than mid-values, saturated but NOT neon. Must serve as readable outline at small sizes.",
+  rim: "cold cyan-blue rim light along ONE consistent edge (right side preferred), brighter than mid-values, saturated but NOT neon",
   fill: "minimal cool ambient fill from opposite side, just enough to prevent total black crush",
   shadows: "hue-shifted shadows: purple/blue undertones in dark areas, never pure black or pure grey",
   rule: "Warm key + cold rim is the SIGNATURE look. Rim MUST be consistent along ONE side — no patchy outline.",
 };
 
-const COLOR_DIR = {
-  temperature: "Overall muted/desaturated. Warm accents are EARNED — only on key focal points.",
-  accents: "Reds and golds are accent colors, used sparingly for emphasis. Never uniform warm wash.",
-  shadows: "Shadows shift toward purple/blue/violet. Never pure black. Never pure grey.",
-  highlights: "Highlights shift toward warm gold/amber on light-facing edges. Never pure white.",
-  saturation: "Low overall saturation with strategic pops.",
+// ─── UNIVERSAL NEGATIVES ────────────────────────────────────────
+
+const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no text overlays, no watermarks, no lens flare, no chromatic aberration, no AI artifacts (extra fingers, merged limbs, floating objects)";
+
+// ─── QA SELF-CHECK (appended to every prompt) ───────────────────
+
+const QA_PIXEL = `Self-check before finalizing:
+✓ Canvas size matches requested dimensions exactly
+✓ Frame count matches requested count (if sprite sheet)
+✓ Single-row horizontal strip (if sprite sheet)
+✓ Background rule followed (transparent or solid #0C0C14)
+✓ NO anti-aliasing — every pixel is a solid color
+✓ NO alpha bleed — no semi-transparent pixels at edges
+✓ Silhouette readable at 25% zoom
+✓ 1px outline present on subject`;
+
+const QA_INK = `Self-check before finalizing:
+✓ Canvas dimensions match requested size
+✓ No characters present (backgrounds only)
+✓ No readable text, no UI elements
+✓ Rim light consistent along one edge
+✓ Value structure has 4+ distinct tonal bands
+✓ Composition leaves room for game UI overlay`;
+
+// ─── TIER-SPECIFIC DO/DON'T RULES ───────────────────────────────
+
+const TIER_RULES: Record<string, string> = {
+  icon: `ICON RULES (16-64px):
+DO: 3-value shading (highlight/mid/shadow), simple internal linework, bold readable silhouette
+DO: Center subject, fill frame to edges, flat/orthographic view
+DON'T: micro-texture, tiny scratches, complex lighting, glow that washes edges
+DON'T: perspective distortion, 3D rendering, photorealism
+Background: TRANSPARENT (no solid fill)`,
+
+  tile: `TILE RULES (top-down):
+DO: clear readable pattern, consistent top-down lighting, tileable edges where applicable
+DO: minimal parallax cues, flat orthographic view
+DON'T: perspective lighting, cinematic rim light, portrait-style shading
+DON'T: heavy shadows that break tiling
+Background: TRANSPARENT`,
+
+  ui: `UI CHROME RULES:
+DO: 9-slice friendly borders, flat-ish shading, readable at small sizes
+DO: consistent border weight, clean corners
+DON'T: ornate filigree that shimmers at small sizes, complex gradients
+DON'T: photorealistic textures, heavy drop shadows
+Background: TRANSPARENT`,
+
+  vfx: `VFX RULES:
+DO: chunky shapes, limited particle count, clear timing beats per frame
+DO: high contrast against dark backgrounds, readable animation arc
+DON'T: smoke that becomes anti-aliased blur, spark noise, soft glow
+DON'T: photorealistic fire/smoke, gradient-heavy rendering
+Background: SOLID #0C0C14`,
+
+  unit: `UNIT SPRITE SHEET RULES:
+DO: consistent proportions across ALL frames, clear silhouette per frame
+DO: root-pin feet to consistent pixel row across all frames (no vertical bob)
+DO: readable at 1x scale, strong outline
+DON'T: vary character size between frames, add extra frames, change aspect ratio
+DON'T: use gradients, soft shadows, or anti-aliased edges
+Background: SOLID #0C0C14`,
+
+  font: `FONT/GLYPH RULES:
+DO: consistent stroke weight, readable at target size, uniform baseline
+DO: pixel-perfect alignment to grid
+DON'T: anti-aliased curves, sub-pixel rendering, variable stroke weight
+Background: SOLID #0C0C14`,
+
+  node: `NODE/EMBLEM RULES:
+DO: pixel art style (NOT ink illustration), bold readable shape at 48px
+DO: 3-value shading, centered composition, flat orthographic
+DON'T: say "ink illustration" or "flat illustration" — this IS pixel art
+DON'T: painterly texture, photorealism, complex lighting
+Background: TRANSPARENT`,
+
+  background: `BACKGROUND RULES:
+DO: wide cinematic panorama, low horizon, clear foreground ground plane for unit placement
+DO: 3 depth planes (foreground detail, midground subject, background atmosphere)
+DO: volumetric haze/smoke for atmosphere
+DON'T: include any characters, readable text, UI elements, or modern objects
+DON'T: use pixel art style — this is painterly/photorealistic illustration
+Background: rendered scene (no transparency)`,
+
+  portrait: `PORTRAIT RULES:
+DO: chest-up or waist-up, centered, slight low angle for authority
+DO: minimum 4 distinct tonal bands, each major form has own tonal identity
+DO: rim light bright enough to serve as outline, consistent along ONE side
+DON'T: collapse torso into single dark mass, use uniform dark wash
+DON'T: add background scenery, heroic poses, clean/pristine clothing
+DON'T: use pixel art style — this is painterly illustration
+Background: dark atmospheric (no transparency)`,
+
+  logo: `LOGO/KEY ART RULES:
+DO: bold readable design, works at multiple scales
+DO: ink-and-gold aesthetic, dramatic composition
+DON'T: pixel art style, complex gradients that break at small sizes
+DON'T: include game UI, character portraits, or text unless specified
+Background: per asset specification`,
 };
 
-const MATERIALS: Record<string, string> = {
-  metals: "oiled steel, tarnished iron, cold-forged, pitted and worn — never chrome",
-  leather: "cracked, oil-darkened, sweat-stained, visible grain and stitching",
-  fabric: "coarse linen, wool, heavy canvas, frayed edges — never silk",
-  skin: "weathered, scarred, age-lined — never smooth or porcelain",
-  wood: "dark oak, weathered pine, worm-eaten, visible grain",
-  stone: "rough-hewn, lichen-spotted, mortar-cracked",
-};
+// ─── PROMPT BUILDERS ─────────────────────────────────────────────
 
-const UNIVERSAL_NEGATIVES = [
-  "no anime", "no cartoon", "no chibi", "no cel-shading",
-  "no modern clothing", "no sci-fi elements", "no neon lighting",
-  "no text overlays", "no watermarks", "no lens flare",
-  "no chromatic aberration", "no AI artifacts (extra fingers, merged limbs, floating objects)",
-];
-
-// ─── TIER-AWARE PROMPT BUILDER ────────────────────────────────────
-
-function buildTierPrompt(
+function buildPromptForTier(
   tier: AssetTier,
   subject: string,
   width: number,
@@ -57,198 +178,102 @@ function buildTierPrompt(
   modifierText: string,
   referenceNote: string,
 ): string {
-  switch (tier) {
-    case "background":
-      return buildBackgroundPrompt(subject, width, height, modifierText, referenceNote);
-    case "portrait":
-      return buildPortraitPrompt(subject, width, height, paletteDescription, modifierText, referenceNote);
-    case "unit":
-      return buildUnitPrompt(subject, width, height, paletteDescription, modifierText, referenceNote);
-    case "icon":
-    case "tile":
-    case "node":
-      return buildIconPrompt(tier, subject, width, height, paletteDescription, modifierText, referenceNote);
-    default:
-      return buildPortraitPrompt(subject, width, height, paletteDescription, modifierText, referenceNote);
+  const isPixel = isPixelTier(tier);
+  const header = isPixel ? PIXEL_HEADER : INK_HEADER;
+  const tierRule = TIER_RULES[tier] || "";
+  const qaCheck = isPixel ? QA_PIXEL : QA_INK;
+
+  // Tier-specific layout/composition
+  let layoutBlock = "";
+  if (tier === "unit") {
+    const frameH = height;
+    const frameCount = Math.round(width / height) || 10;
+    const cellW = Math.round(width / frameCount);
+    layoutBlock = `
+═══ SPRITE SHEET LAYOUT (HARD REQUIREMENTS) ═══
+EXACT canvas size: ${width}×${height} px
+EXACT frames: ${frameCount} frames, single horizontal row, left-to-right
+EXACT cell size: ${cellW}×${frameH} px per frame
+No padding between frames; each cell fully occupied by character
+Do NOT add extra frames; do NOT change aspect ratio
+Keep character anchored: feet locked to consistent pixel row in EVERY frame
+Frame sequence: Idle1, Walk1, Walk2, Walk3, AttackWindup, AttackSwing, AttackRecover, HitStagger, DeathFall, DeadFlat`;
+  } else if (tier === "vfx") {
+    const frameCount = Math.round(width / height) || 6;
+    const cellW = Math.round(width / frameCount);
+    layoutBlock = `
+═══ SPRITE SHEET LAYOUT (HARD REQUIREMENTS) ═══
+EXACT canvas size: ${width}×${height} px
+EXACT frames: ${frameCount} frames, single horizontal row, left-to-right
+EXACT cell size: ${cellW}×${height} px per frame
+No padding between frames
+Do NOT add extra frames; do NOT change aspect ratio`;
+  } else {
+    layoutBlock = `
+═══ DIMENSIONS ═══
+Target: ${width}×${height} px`;
+    if (tier === "background") {
+      layoutBlock += `\nRender at 1920×1080 for clean downscale to ${width}×${height}`;
+    } else if (tier === "portrait") {
+      layoutBlock += `\nRender at 512×512 for cascaded downscale to ${width}×${height}`;
+    }
   }
-}
 
-function buildBackgroundPrompt(subject: string, w: number, h: number, mods: string, refNote: string): string {
-  return `Generate a single high-quality game background image.
+  // Build palette section
+  let paletteBlock = "";
+  if (paletteDescription) {
+    paletteBlock = `\n═══ PALETTE ═══\n${paletteDescription}`;
+  }
 
-═══ BRAND ═══
+  // Build modifiers section
+  let modBlock = "";
+  if (modifierText) {
+    modBlock = `\n═══ ADDITIONAL STYLE MODIFIERS ═══\n${modifierText}`;
+  }
+
+  // Tier-specific negatives
+  let tierNeg = "";
+  if (isPixel) {
+    tierNeg = ", no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering, no ink illustration, no painterly texture";
+  }
+  if (tier === "background") {
+    tierNeg = ", no characters present, no readable text, no UI elements, no pixel art style";
+  }
+  if (tier === "portrait") {
+    tierNeg = ", no extra limbs, no deformed hands, no blurred face, no background scenery, no pixel art style, no noisy micro-texture";
+  }
+
+  return `═══ BRAND ═══
 ${BRAND_IDENTITY}
+
+═══ STYLE PIPELINE: ${isPixel ? "PIXEL ART" : "INK-AND-GOLD ILLUSTRATION"} ═══
+${header}
+
+═══ ${tier.toUpperCase()} TIER RULES ═══
+${tierRule}
+${layoutBlock}
 
 ═══ SUBJECT ═══
 ${subject}
-Target: ${w}×${h} (landscape, cinematic)
-
-═══ COMPOSITION ═══
-Wide establishing shot, 24-35mm, rule-of-thirds framing.
-Empty negative space for UI overlay, readable silhouettes.
-3 clear depth planes: foreground detail, midground subject, background atmosphere.
-Volumetric haze/smoke, atmospheric depth.
-
-═══ LIGHTING ═══
-Key: ${LIGHTING.key}
-Fill: ${LIGHTING.fill}
-Shadows: ${LIGHTING.shadows}
-Volumetric light rays where appropriate.
-
-═══ COLOR ═══
-${COLOR_DIR.temperature} ${COLOR_DIR.shadows} ${COLOR_DIR.highlights}
+${paletteBlock}
 
 ═══ MATERIALS ═══
-${MATERIALS.wood}; ${MATERIALS.stone}
-
-${mods ? `═══ STYLE ═══\n${mods}` : ""}
-${refNote}
-
-═══ NEGATIVE ═══
-${UNIVERSAL_NEGATIVES.join(", ")}, no characters present, no readable text/signage, no fisheye, no extreme Dutch angle
-
-═══ NOTES ═══
-- Render at 1920×1080 for clean downscale to ${w}×${h}
-- This is a PHOTOREALISTIC background — no pixel art processing
-- Cinematic realism, NOT stylized pixel art
-- Must read as atmospheric environment at final size`;
-}
-
-function buildPortraitPrompt(subject: string, w: number, h: number, palette: string, mods: string, refNote: string): string {
-  return `Generate a single high-quality game portrait asset.
-
-═══ BRAND ═══
-${BRAND_IDENTITY}
-
-═══ SUBJECT ═══
-${subject}
-Asset: portrait | ${w}×${h} | Render at 512×512 for cascaded downscale
-
-═══ COMPOSITION ═══
-Chest-up or waist-up, centered, slight low angle for authority.
-Direct eye contact, shoulders squared. Subject fills 70-80% of frame.
-35mm equivalent, shallow DOF.
-
-═══ LIGHTING (SIGNATURE) ═══
-Key: ${LIGHTING.key}
-Rim: ${LIGHTING.rim}
-Fill: ${LIGHTING.fill}
-Shadows: ${LIGHTING.shadows}
-RULE: ${LIGHTING.rule}
-
-═══ VALUE STRUCTURE ═══
-CRITICAL — minimum 4 distinct tonal bands: deep shadow, mid-shadow, mid-light, highlight.
-Each major form (head, torso, arms) needs its own tonal identity.
-Torso must NOT collapse into single dark mass.
-Force value breaks: brighter lapel edge, lighter shirt, highlight on collar/shoulder seam.
-
-═══ SPRITE READABILITY ═══
-HIGH CONTRAST VALUE GROUPING. Simplified midtones — group similar values.
-Clean shape massing over micro-texture. NO dithering noise.
-Rim light bright enough to serve as outline. Consistent along ONE side only.
-Minimal micro-texture at this size.
-
-═══ COLOR ═══
-${COLOR_DIR.temperature} ${COLOR_DIR.accents} ${COLOR_DIR.shadows} ${COLOR_DIR.highlights} ${COLOR_DIR.saturation}
-${palette ? `Palette guidance: ${palette}` : ""}
-
-═══ MATERIALS ═══
-${MATERIALS.metals}; ${MATERIALS.leather}; ${MATERIALS.fabric}; ${MATERIALS.skin}
-
-${mods ? `═══ STYLE ═══\n${mods}` : ""}
-${refNote}
+${MATERIAL_DICT}
+${modBlock}
+${referenceNote}
 
 ═══ NEGATIVE ═══
-${UNIVERSAL_NEGATIVES.join(", ")}, no extra limbs, no deformed hands, no blurred face, no background scenery, no heroic pose, no clean/pristine clothing, no sparkly effects, no noisy micro-texture, no sparkly dithering, no compressed midtones, no sharpening artifacts
+${NEG_BASE}${tierNeg}
 
-═══ NOTES ═══
-- Render at high resolution for cascaded downscale to ${w}×${h}
-- Every major form must have own tonal identity — no value collapsing
-- Rim light consistent along ONE edge — no patchy outline
-- Prioritize shape clarity and value separation over surface detail
-- Production game asset — must read instantly in-game`;
-}
-
-function buildUnitPrompt(subject: string, w: number, h: number, palette: string, mods: string, refNote: string): string {
-  const frameH = h; // each frame is hxh
-  const frameCount = Math.round(w / h) || 10;
-  const paletteSnippet = palette ? palette.split(",").slice(0, 12).join(", ") : "";
-
-  return `Generate a pixel art sprite sheet.
-
-═══ BRAND ═══
-${BRAND_IDENTITY}
-
-═══ SUBJECT ═══
-${subject}
-${frameCount} frames horizontal strip, each frame ${frameH}×${frameH} pixels.
-Total image: ${w}×${h}. Transparent background (checkerboard).
-
-═══ PIXEL ART RULES ═══
-Hard pixel edges, NO anti-aliasing, NO gradients, NO blur, NO dithering.
-1px dark outline (#0C0C14) around character. Crisp silhouette readable at small size.
-8-bit aesthetic with clean shapes.
-${paletteSnippet ? `Restricted palette: ${paletteSnippet}` : ""}
-
-═══ FRAME LAYOUT ═══
-4 idle frames (subtle bob/breathing), 3 attack frames (wind-up, strike, recover), 3 death frames (stagger, fall, prone).
-Isometric-adjacent top-down-slight viewing angle.
-Consistent character proportions across ALL frames.
-
-═══ LIGHTING ═══
-Consistent top-left directional light across all frames.
-${LIGHTING.key}
-
-═══ MATERIALS ═══
-${MATERIALS.metals}; ${MATERIALS.leather}; ${MATERIALS.fabric}
-
-${mods ? `═══ STYLE ═══\n${mods}` : ""}
-${refNote}
-
-═══ NEGATIVE ═══
-${UNIVERSAL_NEGATIVES.join(", ")}, no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering
-
-═══ NOTES ═══
-- This IS pixel art — hard edges, restricted colors, no smoothing
-- Each frame must be clearly separated with consistent spacing
-- Character must be recognizable at ${frameH}×${frameH} pixels`;
-}
-
-function buildIconPrompt(tier: string, subject: string, w: number, h: number, palette: string, mods: string, refNote: string): string {
-  return `Generate a pixel art ${tier}.
-
-═══ BRAND ═══
-${BRAND_IDENTITY}
-
-═══ SUBJECT ═══
-${subject}
-${w}×${h} pixels. Transparent background.
-
-═══ PIXEL ART RULES ═══
-Hard pixel edges, NO anti-aliasing. 1px outline (#0C0C14). High contrast.
-Centered, fills frame to edges, bold graphic shape.
-Silhouette must read at ${Math.min(w, h)}×${Math.min(w, h)}.
-Flat/orthographic, no perspective distortion. Minimal negative space.
-${palette ? `Restricted palette: ${palette}` : ""}
-
-═══ LIGHTING ═══
-Consistent top-left. Simple 2-3 value shading.
-
-${mods ? `═══ STYLE ═══\n${mods}` : ""}
-${refNote}
-
-═══ NEGATIVE ═══
-${UNIVERSAL_NEGATIVES.join(", ")}, no 3D perspective, no characters, no text, no complex background, no gradients, no blur
-
-═══ NOTES ═══
-- Pure pixel art at exact target size
-- Must read instantly as "${subject}" at ${w}×${h}`;
+═══ QA SELF-CHECK ═══
+${qaCheck}`;
 }
 
 // ─── TIER INFERENCE ───────────────────────────────────────────────
 
 function inferTier(assetType: string, w: number, h: number, explicitTier?: string): AssetTier {
-  if (explicitTier && ["background", "portrait", "unit", "icon", "tile", "node"].includes(explicitTier)) {
+  const validTiers: AssetTier[] = ["background", "portrait", "unit", "icon", "tile", "node", "ui", "vfx", "font", "logo"];
+  if (explicitTier && validTiers.includes(explicitTier as AssetTier)) {
     return explicitTier as AssetTier;
   }
   if (assetType === "environment" && w >= 480) return "background";
@@ -258,7 +283,7 @@ function inferTier(assetType: string, w: number, h: number, explicitTier?: strin
   if (assetType === "tileset") return "tile";
   if (assetType === "ui") return "node";
   if (assetType === "character") return "portrait";
-  return "portrait";
+  return "icon";
 }
 
 // ─── SERVE ────────────────────────────────────────────────────────
@@ -279,17 +304,16 @@ serve(async (req) => {
     const tier = inferTier(assetType, width, height, explicitTier);
     const modifierText = (styleModifiers || []).join(", ");
     const referenceNote = referenceImage
-      ? "\nIMPORTANT: Use the attached reference image as a STYLE GUIDE. Match its color palette, lighting, level of detail, and overall aesthetic."
+      ? "\n═══ REFERENCE ═══\nIMPORTANT: Use the attached reference image as a STYLE GUIDE. Match its color palette, lighting, level of detail, and overall aesthetic."
       : "";
 
-    const imagePrompt = buildTierPrompt(
+    const imagePrompt = buildPromptForTier(
       tier, prompt, width, height,
       paletteDescription || "", modifierText, referenceNote,
     );
 
-    console.log(`[${tier}] ${width}×${height} prompt (300ch):`, imagePrompt.substring(0, 300));
+    console.log(`[${tier}] ${width}×${height} pipeline=${isPixelTier(tier) ? "PIXEL" : "INK"} prompt(300ch):`, imagePrompt.substring(0, 300));
 
-    // Build message content
     const messageContent: unknown = referenceImage
       ? [
           { type: "text", text: imagePrompt },
@@ -327,35 +351,27 @@ serve(async (req) => {
       throw new Error(`AI gateway returned ${status}`);
     }
 
-    const data = await response.json();
-    const msg = data.choices?.[0]?.message;
-    const content = msg?.content;
-    let imageBase64 = "";
+    const contentType = response.headers.get("content-type") || "";
+    const responseText = await response.text();
 
-    // Extract image from various response formats
-    if (Array.isArray(msg?.images)) {
-      for (const img of msg.images) {
-        if (img.type === "image_url" && img.image_url?.url) {
-          imageBase64 = img.image_url.url;
-          break;
-        }
-      }
+    if (!contentType.includes("application/json")) {
+      console.error("AI gateway returned non-JSON:", contentType, responseText.substring(0, 200));
+      return new Response(JSON.stringify({ error: "AI gateway returned non-JSON response", retryable: true }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    if (!imageBase64 && typeof content === "string") {
-      if (content.startsWith("data:image")) imageBase64 = content;
-      else if (content.length > 100 && !content.includes(" ")) imageBase64 = `data:image/png;base64,${content}`;
+
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error("Failed to parse AI response:", responseText.substring(0, 200));
+      return new Response(JSON.stringify({ error: "Invalid JSON from AI gateway", retryable: true }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    if (!imageBase64 && Array.isArray(content)) {
-      for (const part of content) {
-        if (part.type === "image_url") { imageBase64 = part.image_url?.url || ""; break; }
-        if (part.type === "image" && part.source?.data) { imageBase64 = `data:image/${part.source.media_type || "png"};base64,${part.source.data}`; break; }
-      }
-    }
-    if (!imageBase64 && Array.isArray(msg?.parts)) {
-      for (const part of msg.parts) {
-        if (part.inline_data) { imageBase64 = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`; break; }
-      }
-    }
+
+    const imageBase64 = extractImage(data);
 
     if (!imageBase64) {
       console.error("No image in response:", JSON.stringify(data).substring(0, 500));
@@ -378,3 +394,32 @@ serve(async (req) => {
     });
   }
 });
+
+// ─── IMAGE EXTRACTION ────────────────────────────────────────────
+
+function extractImage(data: Record<string, unknown>): string {
+  const msg = (data as any).choices?.[0]?.message;
+  const content = msg?.content;
+
+  if (Array.isArray(msg?.images)) {
+    for (const img of msg.images) {
+      if (img.type === "image_url" && img.image_url?.url) return img.image_url.url;
+    }
+  }
+  if (typeof content === "string") {
+    if (content.startsWith("data:image")) return content;
+    if (content.length > 100 && !content.includes(" ")) return `data:image/png;base64,${content}`;
+  }
+  if (Array.isArray(content)) {
+    for (const part of content) {
+      if (part.type === "image_url") return part.image_url?.url || "";
+      if (part.type === "image" && part.source?.data) return `data:image/${part.source.media_type || "png"};base64,${part.source.data}`;
+    }
+  }
+  if (Array.isArray(msg?.parts)) {
+    for (const part of msg.parts) {
+      if (part.inline_data) return `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
+    }
+  }
+  return "";
+}
