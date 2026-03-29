@@ -136,30 +136,44 @@ const BatchQueuePage = () => {
     ));
 
     try {
-      const { data, error } = await supabase.functions.invoke('batch-generate', {
-        body: { asset_key: assetKey },
-      });
+      const MAX_CLIENT_RETRIES = 3;
+      let lastError = '';
 
-      if (error) throw new Error(error.message);
-      if (data?.error) {
-        if (data.retryable) {
-          toast.warning(`${assetKey}: ${data.error}`);
-          setAssets(prev => prev.map(a =>
-            a.asset_key === assetKey ? { ...a, qa_status: 'pending' } : a
-          ));
-        } else {
+      for (let attempt = 0; attempt < MAX_CLIENT_RETRIES; attempt++) {
+        const { data, error } = await supabase.functions.invoke('batch-generate', {
+          body: { asset_key: assetKey },
+        });
+
+        if (error) throw new Error(error.message);
+
+        if (data?.error) {
+          if (data.retryable && attempt < MAX_CLIENT_RETRIES - 1) {
+            lastError = data.error;
+            const waitSec = (attempt + 1) * 4;
+            setAssets(prev => prev.map(a =>
+              a.asset_key === assetKey ? { ...a, qa_status: `retry ${attempt + 1}/${MAX_CLIENT_RETRIES}` as any } : a
+            ));
+            toast.warning(`${assetKey}: ${data.error} — retrying in ${waitSec}s (${attempt + 1}/${MAX_CLIENT_RETRIES})`);
+            await new Promise(r => setTimeout(r, waitSec * 1000));
+            continue;
+          }
+          if (data.retryable) {
+            throw new Error(`${data.error} (after ${MAX_CLIENT_RETRIES} retries)`);
+          }
           throw new Error(data.error);
         }
-        return false;
+
+        // Success — break out of retry loop
+        const retries = data?.retries ?? 0;
+        setAssets(prev => prev.map(a =>
+          a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: data.image } : a
+        ));
+        toast.success(`${assetKey} generated${retries > 0 || attempt > 0 ? ` (${retries + attempt} retries)` : ''}`);
+        return true;
       }
 
-      const retries = data?.retries ?? 0;
-      setAssets(prev => prev.map(a =>
-        a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: data.image } : a
-      ));
+      throw new Error(lastError || 'Max retries exceeded');
 
-      toast.success(`${assetKey} generated${retries > 0 ? ` (${retries} retry${retries > 1 ? 'ies' : ''})` : ''}`);
-      return true;
     } catch (err: any) {
       toast.error(`${assetKey} failed: ${err.message}`);
       setAssets(prev => prev.map(a =>
