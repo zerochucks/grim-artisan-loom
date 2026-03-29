@@ -339,7 +339,7 @@ serve(async (req) => {
     }
 
     const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(filePath);
-    const publicUrl = urlData.publicUrl;
+    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`;
 
     const { error: updateErr } = await supabase
       .from("sprite_assets")
