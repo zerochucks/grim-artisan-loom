@@ -113,7 +113,26 @@ serve(async (req) => {
       throw new Error(`AI gateway returned ${status}`);
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const responseText = await response.text();
+    
+    if (!contentType.includes("application/json")) {
+      console.error("AI gateway returned non-JSON:", contentType, responseText.substring(0, 200));
+      return new Response(JSON.stringify({ error: "AI gateway returned non-JSON response", retryable: true }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error("Failed to parse AI response:", responseText.substring(0, 200));
+      return new Response(JSON.stringify({ error: "Invalid JSON from AI gateway", retryable: true }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const imageBase64 = extractImage(data);
 
     if (!imageBase64) {
