@@ -392,20 +392,35 @@ const BatchQueuePage = () => {
   };
 
   const handleDownloadAllZip = async () => {
-    const downloadable = assets.filter(
-      a => a.storage_url && ['generated', 'qa_pass', 'approved'].includes(a.qa_status)
-    );
-    if (downloadable.length === 0) {
+    toast.info('FETCHING ALL GENERATED ASSETS...');
+    // Fetch all downloadable assets across all pages
+    const allDownloadable: SpriteAssetRow[] = [];
+    const batchSize = 500;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('sprite_assets')
+        .select('asset_key, unity_path, storage_url, qa_status')
+        .in('qa_status', ['generated', 'qa_pass', 'approved'])
+        .not('storage_url', 'is', null)
+        .order('asset_key')
+        .range(from, from + batchSize - 1);
+      if (error || !data) break;
+      allDownloadable.push(...(data as unknown as SpriteAssetRow[]));
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+
+    if (allDownloadable.length === 0) {
       toast.error('NO GENERATED ASSETS TO DOWNLOAD.');
       return;
     }
-    toast.info(`PACKAGING ${downloadable.length} ASSETS...`);
+    toast.info(`PACKAGING ${allDownloadable.length} ASSETS...`);
     const zip = new JSZip();
 
-    for (const asset of downloadable) {
+    for (const asset of allDownloadable) {
       const url = asset.storage_url!;
       try {
-        // Reconstruct folder structure from unity_path
         const pathParts = asset.unity_path.replace(/^Assets\//, '');
         if (url.startsWith('data:')) {
           const base64 = url.split(',')[1];
@@ -429,7 +444,7 @@ const BatchQueuePage = () => {
     link.href = dlUrl;
     link.click();
     URL.revokeObjectURL(dlUrl);
-    toast.success(`ZIP DISPATCHED — ${downloadable.length} ASSETS.`);
+    toast.success(`ZIP DISPATCHED — ${allDownloadable.length} ASSETS.`);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
