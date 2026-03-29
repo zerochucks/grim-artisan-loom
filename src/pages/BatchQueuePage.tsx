@@ -15,6 +15,7 @@ interface SpriteAssetRow {
   id: string;
   asset_key: string;
   tier: string;
+  category: string | null;
   unity_path: string;
   target_w: number;
   target_h: number;
@@ -61,6 +62,7 @@ const BatchQueuePage = () => {
   const batchAbort = useRef(false);
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
@@ -76,7 +78,7 @@ const BatchQueuePage = () => {
 
     const { data, error, count } = await supabase
       .from('sprite_assets')
-      .select('id,asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
+      .select('id,asset_key,tier,category,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
       .order('tier')
       .order('asset_key')
       .range(from, to);
@@ -123,6 +125,7 @@ const BatchQueuePage = () => {
     return assets.filter(a => {
       if (filterTier !== 'all' && a.tier !== filterTier) return false;
       if (filterStatus !== 'all' && a.qa_status !== filterStatus) return false;
+      if (filterCategory !== 'all' && (a.category || 'misc') !== filterCategory) return false;
       return true;
     });
   };
@@ -466,6 +469,7 @@ const BatchQueuePage = () => {
   const filteredAssets = getFilteredAssets();
   const tiers = [...new Set(assets.map(a => a.tier))].sort();
   const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
+  const categories = [...new Set(assets.map(a => a.category || 'misc'))].sort();
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
