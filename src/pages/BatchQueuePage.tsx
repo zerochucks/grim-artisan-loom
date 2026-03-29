@@ -282,9 +282,27 @@ const BatchQueuePage = () => {
     return result;
   };
 
-  const handleDownloadCSV = () => {
+  const handleDownloadCSV = async () => {
     const headers = ['asset_key', 'tier', 'unity_path', 'target_w', 'target_h', 'frame_count', 'ppu', 'filter_mode', 'qa_status', 'prompt_template', 'primary_color'];
-    const rows = assets.map(a =>
+    toast.info('Fetching all assets…');
+    // Fetch ALL rows, not just current page
+    let allRows: SpriteAssetRow[] = [];
+    let from = 0;
+    const batchSize = 500;
+    while (true) {
+      const { data, error } = await supabase
+        .from('sprite_assets')
+        .select('asset_key,tier,unity_path,target_w,target_h,frame_count,ppu,filter_mode,qa_status,prompt_template,primary_color')
+        .order('tier')
+        .order('asset_key')
+        .range(from, from + batchSize - 1);
+      if (error) { toast.error('Failed to fetch assets'); return; }
+      if (!data || data.length === 0) break;
+      allRows = allRows.concat(data as unknown as SpriteAssetRow[]);
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+    const rows = allRows.map(a =>
       headers.map(h => {
         const val = (a as any)[h];
         if (val === null || val === undefined) return '';
@@ -302,7 +320,7 @@ const BatchQueuePage = () => {
     a.download = `sprite-assets-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Downloaded ${assets.length} rows as CSV`);
+    toast.success(`Downloaded ${allRows.length} rows as CSV`);
   };
 
   const handleUploadCSV = async (file: File) => {
