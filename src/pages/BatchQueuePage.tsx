@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,7 @@ const BatchQueuePage = () => {
   const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const [variationStrength, setVariationStrength] = useState(50);
   const PAGE_SIZE = 100;
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
@@ -143,7 +145,7 @@ const BatchQueuePage = () => {
 
       for (let attempt = 0; attempt < MAX_CLIENT_RETRIES; attempt++) {
         const { data, error } = await supabase.functions.invoke('batch-generate', {
-          body: { asset_key: assetKey },
+          body: { asset_key: assetKey, variation_strength: variationStrength },
         });
 
         if (error) throw new Error(error.message);
@@ -584,6 +586,19 @@ const BatchQueuePage = () => {
             <option value="all">ALL</option>
             {statuses.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
+        </div>
+
+        <div className="flex items-center gap-2 ml-4">
+          <span className="text-[10px] font-display text-muted-foreground tracking-widest whitespace-nowrap">VARIATION</span>
+          <Slider
+            value={[variationStrength]}
+            onValueChange={([v]) => setVariationStrength(v)}
+            min={0}
+            max={100}
+            step={10}
+            className="w-24"
+          />
+          <span className="text-[10px] font-body text-foreground w-8 text-right">{variationStrength}%</span>
         </div>
 
         <div className="flex-1" />
