@@ -639,6 +639,7 @@ const BatchQueuePage = () => {
                 </th>
                 <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">ASSET KEY</th>
                 <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">TIER</th>
+                <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">CAT</th>
                 <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">SIZE</th>
                 <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">FRAMES</th>
                 <th className="px-3 py-2 text-left font-display text-[10px] tracking-widest text-muted-foreground">STATUS</th>
