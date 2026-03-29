@@ -678,6 +678,9 @@ const BatchQueuePage = () => {
                       {TIER_ICONS[asset.tier] || '📦'} {asset.tier}
                     </span>
                   </td>
+                  <td className="px-3 py-2">
+                    <span className="text-[9px] text-muted-foreground uppercase">{asset.category || 'misc'}</span>
+                  </td>
                   <td className="px-3 py-2 text-muted-foreground">
                     {asset.target_w}×{asset.target_h}
                   </td>
