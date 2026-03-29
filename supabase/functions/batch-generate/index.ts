@@ -191,7 +191,8 @@ serve(async (req) => {
     if (authErr || !user) throw new Error("Unauthorized");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { asset_key } = await req.json();
+    const { asset_key, variation_strength } = await req.json();
+    const variationPct = typeof variation_strength === "number" ? Math.max(0, Math.min(100, variation_strength)) : 50;
 
     if (!asset_key || typeof asset_key !== "string") {
       throw new Error("asset_key (string) required");
@@ -236,9 +237,15 @@ serve(async (req) => {
 
     // Detect re-generation (rejected or previously generated) and add variation
     const isRegeneration = spec.qa_status === "rejected" || spec.qa_status === "generated";
-    if (isRegeneration) {
+    if (isRegeneration && variationPct > 0) {
       const variationSeed = Date.now() % 10000;
-      (messageContent[0] as any).text += `\n\n═══ VARIATION ═══\nThis is a RE-GENERATION. The previous version was rejected. Produce a DISTINCTLY DIFFERENT interpretation:\n- Vary the pose, angle, or composition significantly\n- Try a different lighting direction or color temperature shift\n- Alter secondary details (accessories, weathering, background elements)\n- Variation seed: ${variationSeed}\nDo NOT reproduce the previous result.`;
+      const strengthLabel = variationPct <= 25 ? "SUBTLE TWEAK" : variationPct <= 60 ? "MODERATE VARIATION" : "COMPLETELY NEW INTERPRETATION";
+      const instructions = variationPct <= 25
+        ? "Make minor adjustments: slightly shift lighting, tweak small details (scratches, weathering), keep overall composition and pose."
+        : variationPct <= 60
+        ? "Produce a noticeably different version: vary the pose/angle, change lighting direction, alter secondary details (accessories, weathering, background elements)."
+        : "Produce a COMPLETELY DIFFERENT interpretation: new pose, new angle, different composition, different color temperature, reimagined secondary elements.";
+      (messageContent[0] as any).text += `\n\n═══ VARIATION (${strengthLabel}) ═══\nThis is a RE-GENERATION (strength: ${variationPct}%).\n${instructions}\n- Variation seed: ${variationSeed}\nDo NOT reproduce the previous result.`;
     }
 
     console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}${isRegeneration ? " [RE-GEN]" : ""}`);
@@ -256,7 +263,7 @@ serve(async (req) => {
           model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
           modalities: ["image", "text"],
-          temperature: isRegeneration ? 1.2 : 0.9,
+          temperature: isRegeneration ? 0.7 + (variationPct / 100) * 0.8 : 0.9,
         }),
       });
 
