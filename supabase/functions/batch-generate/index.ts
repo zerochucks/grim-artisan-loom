@@ -225,11 +225,13 @@ serve(async (req) => {
       { type: "text", text: buildPrompt(spec, referenceNote) },
     ];
 
-    if (referenceImages.length > 0 && referenceImages[0].storage_url) {
-      messageContent.push({
-        type: "image_url",
-        image_url: { url: referenceImages[0].storage_url },
-      });
+    for (const ref of referenceImages) {
+      if (ref.storage_url) {
+        messageContent.push({
+          type: "image_url",
+          image_url: { url: ref.storage_url },
+        });
+      }
     }
 
     console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}`);
