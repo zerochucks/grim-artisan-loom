@@ -29,7 +29,7 @@ interface SpriteAssetRow {
   primary_color: string | null;
 }
 
-type QaStatus = 'pending' | 'queued' | 'generating' | 'generated' | 'qa_pass' | 'approved' | 'rejected';
+type QaStatus = 'pending' | 'queued' | 'generating' | 'generated' | 'approved' | 'rejected';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-muted text-muted-foreground',
@@ -37,7 +37,6 @@ const STATUS_COLORS: Record<string, string> = {
   generating: 'bg-accent text-accent-foreground animate-pulse',
   retrying: 'bg-amber-900/40 text-amber-400 animate-pulse',
   generated: 'bg-primary/20 text-primary',
-  qa_pass: 'bg-emerald-900/40 text-emerald-400',
   approved: 'bg-emerald-900/60 text-emerald-300',
   rejected: 'bg-destructive/20 text-destructive',
 };
@@ -418,7 +417,7 @@ const BatchQueuePage = () => {
       const { data, error } = await supabase
         .from('sprite_assets')
         .select('asset_key, unity_path, storage_url, qa_status')
-        .in('qa_status', ['generated', 'qa_pass', 'approved'])
+        .in('qa_status', ['generated', 'approved'])
         .not('storage_url', 'is', null)
         .order('asset_key')
         .range(from, from + batchSize - 1);
@@ -754,46 +753,24 @@ const BatchQueuePage = () => {
                        {/* QA Pass */}
                        {asset.qa_status === 'generated' && (
                          <>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-400 border-emerald-800 hover:bg-emerald-900/30"
-                             onClick={() => setQaStatus(asset.asset_key, 'qa_pass')}
-                           >
-                             ✓ QA
-                           </Button>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
-                             onClick={() => setQaStatus(asset.asset_key, 'rejected')}
-                           >
-                             ✗
-                           </Button>
-                         </>
-                       )}
-
-                       {/* Approve */}
-                       {asset.qa_status === 'qa_pass' && (
-                         <>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-300 border-emerald-700 hover:bg-emerald-900/40"
-                             onClick={() => setQaStatus(asset.asset_key, 'approved')}
-                           >
-                             ✓ APPROVE
-                           </Button>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
-                             onClick={() => setQaStatus(asset.asset_key, 'rejected')}
-                           >
-                             ✗
-                           </Button>
-                         </>
-                       )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-[9px] font-display tracking-wider text-emerald-400 border-emerald-800 hover:bg-emerald-900/30"
+                              onClick={() => setQaStatus(asset.asset_key, 'approved')}
+                            >
+                              ✓ APPROVE
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
+                              onClick={() => setQaStatus(asset.asset_key, 'rejected')}
+                            >
+                              ✗
+                            </Button>
+                          </>
+                        )}
 
                        {/* Approved — show label + regenerate option */}
                        {asset.qa_status === 'approved' && (
@@ -935,25 +912,6 @@ const BatchQueuePage = () => {
                   ✏️ EDIT PROMPT
                 </Button>
                 {previewAsset.qa_status === 'generated' && (
-                  <>
-                    <Button
-                      size="sm"
-                      className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'qa_pass'); setPreviewAsset(null); }}
-                    >
-                      ✓ QA PASS
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); setPreviewAsset(null); }}
-                    >
-                      ✗ REJECT
-                    </Button>
-                  </>
-                )}
-                {previewAsset.qa_status === 'qa_pass' && (
                   <>
                     <Button
                       size="sm"
