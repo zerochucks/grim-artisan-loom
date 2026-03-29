@@ -916,25 +916,6 @@ const BatchQueuePage = () => {
                     <Button
                       size="sm"
                       className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'qa_pass'); setPreviewAsset(null); }}
-                    >
-                      ✓ QA PASS
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); setPreviewAsset(null); }}
-                    >
-                      ✗ REJECT
-                    </Button>
-                  </>
-                )}
-                {previewAsset.qa_status === 'qa_pass' && (
-                  <>
-                    <Button
-                      size="sm"
-                      className="text-[10px] font-display tracking-wider"
                       onClick={() => { setQaStatus(previewAsset.asset_key, 'approved'); setPreviewAsset(null); }}
                     >
                       ✓ APPROVE
