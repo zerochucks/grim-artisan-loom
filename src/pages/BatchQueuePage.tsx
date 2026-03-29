@@ -29,7 +29,7 @@ interface SpriteAssetRow {
   primary_color: string | null;
 }
 
-type QaStatus = 'pending' | 'queued' | 'generating' | 'generated' | 'qa_pass' | 'approved' | 'rejected';
+type QaStatus = 'pending' | 'queued' | 'generating' | 'generated' | 'approved' | 'rejected';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-muted text-muted-foreground',
@@ -37,7 +37,6 @@ const STATUS_COLORS: Record<string, string> = {
   generating: 'bg-accent text-accent-foreground animate-pulse',
   retrying: 'bg-amber-900/40 text-amber-400 animate-pulse',
   generated: 'bg-primary/20 text-primary',
-  qa_pass: 'bg-emerald-900/40 text-emerald-400',
   approved: 'bg-emerald-900/60 text-emerald-300',
   rejected: 'bg-destructive/20 text-destructive',
 };
@@ -418,7 +417,7 @@ const BatchQueuePage = () => {
       const { data, error } = await supabase
         .from('sprite_assets')
         .select('asset_key, unity_path, storage_url, qa_status')
-        .in('qa_status', ['generated', 'qa_pass', 'approved'])
+        .in('qa_status', ['generated', 'approved'])
         .not('storage_url', 'is', null)
         .order('asset_key')
         .range(from, from + batchSize - 1);
