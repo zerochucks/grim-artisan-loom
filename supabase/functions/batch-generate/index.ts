@@ -237,18 +237,27 @@ serve(async (req) => {
 
     // Detect re-generation (rejected or previously generated) and add variation
     const isRegeneration = spec.qa_status === "rejected" || spec.qa_status === "generated";
-    if (isRegeneration && variationPct > 0) {
-      const variationSeed = Date.now() % 10000;
+    if (isRegeneration) {
+      const previousImageUrl = spec.storage_url as string | null;
+      if (previousImageUrl) {
+        messageContent.push({
+          type: "image_url",
+          image_url: { url: previousImageUrl },
+        });
+      }
+
+      const variationSeed = Date.now() % 1000000;
       const strengthLabel = variationPct <= 25 ? "SUBTLE TWEAK" : variationPct <= 60 ? "MODERATE VARIATION" : "COMPLETELY NEW INTERPRETATION";
       const instructions = variationPct <= 25
         ? "Make minor adjustments: slightly shift lighting, tweak small details (scratches, weathering), keep overall composition and pose."
         : variationPct <= 60
         ? "Produce a noticeably different version: vary the pose/angle, change lighting direction, alter secondary details (accessories, weathering, background elements)."
         : "Produce a COMPLETELY DIFFERENT interpretation: new pose, new angle, different composition, different color temperature, reimagined secondary elements.";
-      (messageContent[0] as any).text += `\n\n═══ VARIATION (${strengthLabel}) ═══\nThis is a RE-GENERATION (strength: ${variationPct}%).\n${instructions}\n- Variation seed: ${variationSeed}\nDo NOT reproduce the previous result.`;
+
+      (messageContent[0] as any).text += `\n\n═══ VARIATION (${strengthLabel}) ═══\nThis is a RE-GENERATION (strength: ${variationPct}%).\n${instructions}\n- Variation seed: ${variationSeed}\nIf a previous attempt image is provided, treat it as a CONTRAST REFERENCE and generate a materially different silhouette/composition from it.`;
     }
 
-    console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}${isRegeneration ? " [RE-GEN]" : ""}`);
+    console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}${isRegeneration ? ` [RE-GEN ${variationPct}%]` : ""}`);
 
     let response: Response | null = null;
     let retryCount = 0;
@@ -323,7 +332,8 @@ serve(async (req) => {
     const mimeMatch = imageBase64.match(/^data:(image\/\w+);/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
     const ext = mimeType === "image/jpeg" ? "jpg" : "png";
-    const filePath = `${asset_key}.${ext}`;
+    const versionTag = Date.now();
+    const filePath = `${asset_key}-${versionTag}.${ext}`;
 
     const binaryStr = atob(base64Data);
     const bytes = new Uint8Array(binaryStr.length);
@@ -331,7 +341,7 @@ serve(async (req) => {
 
     const { error: uploadErr } = await supabase.storage
       .from("pixel-assets")
-      .upload(filePath, bytes, { contentType: mimeType, upsert: true });
+      .upload(filePath, bytes, { contentType: mimeType, upsert: false });
 
     if (uploadErr) {
       console.error("Storage upload error:", uploadErr);
@@ -339,7 +349,7 @@ serve(async (req) => {
     }
 
     const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(filePath);
-    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`;
+    const publicUrl = urlData.publicUrl;
 
     const { error: updateErr } = await supabase
       .from("sprite_assets")
