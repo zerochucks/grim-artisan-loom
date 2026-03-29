@@ -234,7 +234,14 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}`);
+    // Detect re-generation (rejected or previously generated) and add variation
+    const isRegeneration = spec.qa_status === "rejected" || spec.qa_status === "generated";
+    if (isRegeneration) {
+      const variationSeed = Date.now() % 10000;
+      (messageContent[0] as any).text += `\n\n═══ VARIATION ═══\nThis is a RE-GENERATION. The previous version was rejected. Produce a DISTINCTLY DIFFERENT interpretation:\n- Vary the pose, angle, or composition significantly\n- Try a different lighting direction or color temperature shift\n- Alter secondary details (accessories, weathering, background elements)\n- Variation seed: ${variationSeed}\nDo NOT reproduce the previous result.`;
+    }
+
+    console.log(`[batch] Generating ${asset_key} (${spec.tier} ${spec.target_w}×${spec.target_h}) pipeline=${PIXEL_TIERS.includes(spec.tier) ? "PIXEL" : "INK"}${isRegeneration ? " [RE-GEN]" : ""}`);
 
     let response: Response | null = null;
     let retryCount = 0;
@@ -249,6 +256,7 @@ serve(async (req) => {
           model: "google/gemini-3-pro-image-preview",
           messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
           modalities: ["image", "text"],
+          temperature: isRegeneration ? 1.2 : 0.9,
         }),
       });
 
