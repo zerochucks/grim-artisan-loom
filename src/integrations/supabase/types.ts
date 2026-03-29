@@ -145,6 +145,7 @@ export type Database = {
         Row: {
           approved: boolean
           asset_key: string
+          category: string | null
           created_at: string | null
           filter_mode: string
           frame_count: number
@@ -163,6 +164,7 @@ export type Database = {
         Insert: {
           approved?: boolean
           asset_key: string
+          category?: string | null
           created_at?: string | null
           filter_mode?: string
           frame_count?: number
@@ -181,6 +183,7 @@ export type Database = {
         Update: {
           approved?: boolean
           asset_key?: string
+          category?: string | null
           created_at?: string | null
           filter_mode?: string
           frame_count?: number
