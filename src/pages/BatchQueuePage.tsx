@@ -567,6 +567,38 @@ const BatchQueuePage = () => {
             }}
           />
           <button
+            onClick={async () => {
+              const allRows: any[] = [];
+              let from = 0;
+              while (true) {
+                const { data, error } = await supabase
+                  .from('sprite_assets')
+                  .select('asset_key, unity_path, storage_url, qa_status')
+                  .in('qa_status', ['generated', 'approved'])
+                  .not('storage_url', 'is', null)
+                  .order('asset_key')
+                  .range(from, from + 999);
+                if (error || !data || data.length === 0) break;
+                allRows.push(...data);
+                if (data.length < 1000) break;
+                from += 1000;
+              }
+              if (allRows.length === 0) { toast.error('NO ASSETS WITH URLS.'); return; }
+              const csv = ['asset_key,unity_path,status,storage_url', ...allRows.map((r: any) =>
+                `${r.asset_key},${r.unity_path},${r.qa_status},${r.storage_url}`
+              )].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = 'asset-download-links.csv'; a.click();
+              URL.revokeObjectURL(url);
+              toast.success(`EXPORTED ${allRows.length} DOWNLOAD LINKS.`);
+            }}
+            className="text-xs text-accent hover:text-primary transition-colors font-body"
+          >
+            🔗 LINKS CSV
+          </button>
+          <button
             onClick={handleDownloadAllZip}
             className="text-xs text-accent hover:text-primary transition-colors font-body"
           >
