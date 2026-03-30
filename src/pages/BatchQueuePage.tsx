@@ -435,26 +435,53 @@ const BatchQueuePage = () => {
     }
     toast.info(`PACKAGING ${allDownloadable.length} ASSETS...`);
     const zip = new JSZip();
+    let added = 0;
+    let failed = 0;
 
-    for (const asset of allDownloadable) {
+    for (let i = 0; i < allDownloadable.length; i++) {
+      const asset = allDownloadable[i];
       const url = asset.storage_url!;
       try {
         const pathParts = asset.unity_path.replace(/^Assets\//, '');
+        const filename = pathParts.endsWith('.png') ? pathParts : `${pathParts}.png`;
         if (url.startsWith('data:')) {
           const base64 = url.split(',')[1];
-          if (base64) zip.file(pathParts, base64, { base64: true });
+          if (base64) {
+            zip.file(filename, base64, { base64: true });
+            added++;
+          }
         } else {
-          const resp = await fetch(url);
+          const resp = await fetch(url, { mode: 'cors' });
           if (resp.ok) {
             const blob = await resp.blob();
-            zip.file(pathParts, blob);
+            if (blob.size > 0) {
+              zip.file(filename, blob);
+              added++;
+            } else {
+              console.warn(`Empty blob for ${asset.asset_key}`);
+              failed++;
+            }
+          } else {
+            console.error(`HTTP ${resp.status} for ${asset.asset_key}: ${url}`);
+            failed++;
           }
         }
       } catch (e) {
         console.error(`Failed to add ${asset.asset_key}:`, e);
+        failed++;
+      }
+      // Progress toast every 50 assets
+      if ((i + 1) % 50 === 0) {
+        toast.info(`Progress: ${i + 1}/${allDownloadable.length} processed...`);
       }
     }
 
+    if (added === 0) {
+      toast.error(`NO FILES COULD BE FETCHED. ${failed} failed. Check console for details.`);
+      return;
+    }
+
+    toast.info(`Generating ZIP with ${added} files...`);
     const blob = await zip.generateAsync({ type: 'blob' });
     const dlUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -462,7 +489,7 @@ const BatchQueuePage = () => {
     link.href = dlUrl;
     link.click();
     URL.revokeObjectURL(dlUrl);
-    toast.success(`ZIP DISPATCHED — ${allDownloadable.length} ASSETS.`);
+    toast.success(`ZIP DISPATCHED — ${added} assets. ${failed > 0 ? `${failed} failed.` : ''}`);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
