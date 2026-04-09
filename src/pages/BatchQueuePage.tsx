@@ -545,17 +545,43 @@ const BatchQueuePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAssets = getFilteredAssets();
-  const tiers = [...new Set(assets.map(a => a.tier))].sort();
-  const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
-  const categories = [...new Set(assets.map(a => a.category || 'misc'))].sort();
+  const [globalTiers, setGlobalTiers] = useState<string[]>([]);
+  const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
+  const [globalCategories, setGlobalCategories] = useState<string[]>([]);
+  const [globalStats, setGlobalStats] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const fetchGlobalMeta = async () => {
+      const { data: allRows } = await supabase
+        .from('sprite_assets')
+        .select('tier, category, qa_status');
+      if (!allRows) return;
+      setGlobalTiers([...new Set(allRows.map((a: any) => a.tier))].sort());
+      setGlobalStatuses([...new Set(allRows.map((a: any) => a.qa_status))].sort());
+      setGlobalCategories([...new Set(allRows.map((a: any) => a.category || 'misc'))].sort());
+      const counts: Record<string, number> = {};
+      let total = 0;
+      for (const r of allRows) {
+        counts[r.qa_status] = (counts[r.qa_status] || 0) + 1;
+        total++;
+      }
+      counts.total = total;
+      setGlobalStats(counts);
+    };
+    fetchGlobalMeta();
+  }, []);
+
+  const tiers = globalTiers.length > 0 ? globalTiers : [...new Set(assets.map(a => a.tier))].sort();
+  const statuses = globalStatuses.length > 0 ? globalStatuses : [...new Set(assets.map(a => a.qa_status))].sort();
+  const categories = globalCategories.length > 0 ? globalCategories : [...new Set(assets.map(a => a.category || 'misc'))].sort();
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const stats = {
-    total: totalCount,
-    pending: assets.filter(a => a.qa_status === 'pending').length,
-    generated: assets.filter(a => a.qa_status === 'generated').length,
-    approved: assets.filter(a => a.qa_status === 'approved').length,
+    total: globalStats.total || totalCount,
+    pending: globalStats.pending || 0,
+    generated: globalStats.generated || 0,
+    approved: globalStats.approved || 0,
   };
 
   return (
