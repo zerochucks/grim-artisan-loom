@@ -71,6 +71,10 @@ const BatchQueuePage = () => {
   const PAGE_SIZE = 100;
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [globalTiers, setGlobalTiers] = useState<string[]>([]);
+  const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
+  const [globalCategories, setGlobalCategories] = useState<string[]>([]);
+  const [globalStats, setGlobalStats] = useState<Record<string, number>>({});
 
   const fetchAssets = useCallback(async () => {
     setLoading(true);
