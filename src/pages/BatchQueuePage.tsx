@@ -715,7 +715,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">STATUS</span>
           <select
             value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
+            onChange={e => { setFilterStatus(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
