@@ -453,8 +453,7 @@ const BatchQueuePage = () => {
   };
 
   const handleDownloadAllZip = async () => {
-    toast.info('FETCHING ALL GENERATED ASSETS...');
-    // Fetch all downloadable assets across all pages
+    toast.info('FETCHING ASSET LIST...');
     const allDownloadable: SpriteAssetRow[] = [];
     const batchSize = 500;
     let from = 0;
@@ -476,63 +475,63 @@ const BatchQueuePage = () => {
       toast.error('NO GENERATED ASSETS TO DOWNLOAD.');
       return;
     }
-    toast.info(`PACKAGING ${allDownloadable.length} ASSETS...`);
-    const zip = new JSZip();
-    let added = 0;
-    let failed = 0;
 
-    for (let i = 0; i < allDownloadable.length; i++) {
-      const asset = allDownloadable[i];
-      const url = asset.storage_url!;
-      try {
-        const pathParts = asset.unity_path.replace(/^Assets\//, '');
-        const filename = pathParts.endsWith('.png') ? pathParts : `${pathParts}.png`;
-        if (url.startsWith('data:')) {
-          const base64 = url.split(',')[1];
-          if (base64) {
-            zip.file(filename, base64, { base64: true });
-            added++;
-          }
-        } else {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (resp.ok) {
-            const blob = await resp.blob();
-            if (blob.size > 0) {
-              zip.file(filename, blob);
-              added++;
+    const CHUNK = 50;
+    const totalChunks = Math.ceil(allDownloadable.length / CHUNK);
+    toast.info(`DOWNLOADING ${allDownloadable.length} ASSETS IN ${totalChunks} CHUNKS OF ${CHUNK}...`);
+    let globalAdded = 0;
+    let globalFailed = 0;
+
+    for (let c = 0; c < totalChunks; c++) {
+      const chunk = allDownloadable.slice(c * CHUNK, (c + 1) * CHUNK);
+      const zip = new JSZip();
+      let added = 0;
+      let failed = 0;
+
+      for (const asset of chunk) {
+        const url = asset.storage_url!;
+        try {
+          const pathParts = asset.unity_path.replace(/^Assets\//, '');
+          const filename = pathParts.endsWith('.png') ? pathParts : `${pathParts}.png`;
+          if (url.startsWith('data:')) {
+            const base64 = url.split(',')[1];
+            if (base64) { zip.file(filename, base64, { base64: true }); added++; }
+          } else {
+            const resp = await fetch(url, { mode: 'cors' });
+            if (resp.ok) {
+              const blob = await resp.blob();
+              if (blob.size > 0) { zip.file(filename, blob); added++; }
+              else { console.warn(`Empty blob for ${asset.asset_key}`); failed++; }
             } else {
-              console.warn(`Empty blob for ${asset.asset_key}`);
+              console.error(`HTTP ${resp.status} for ${asset.asset_key}: ${url}`);
               failed++;
             }
-          } else {
-            console.error(`HTTP ${resp.status} for ${asset.asset_key}: ${url}`);
-            failed++;
           }
+        } catch (e) {
+          console.error(`Failed to add ${asset.asset_key}:`, e);
+          failed++;
         }
-      } catch (e) {
-        console.error(`Failed to add ${asset.asset_key}:`, e);
-        failed++;
       }
-      // Progress toast every 50 assets
-      if ((i + 1) % 50 === 0) {
-        toast.info(`Progress: ${i + 1}/${allDownloadable.length} processed...`);
+
+      globalAdded += added;
+      globalFailed += failed;
+
+      if (added > 0) {
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const dlUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = totalChunks === 1 ? 'riftdivers-assets.zip' : `riftdivers-assets-part${c + 1}.zip`;
+        link.href = dlUrl;
+        link.click();
+        URL.revokeObjectURL(dlUrl);
       }
+
+      toast.info(`Chunk ${c + 1}/${totalChunks} done (${added} files).`);
+      // Small delay between chunks to let browser breathe
+      if (c < totalChunks - 1) await new Promise(r => setTimeout(r, 1000));
     }
 
-    if (added === 0) {
-      toast.error(`NO FILES COULD BE FETCHED. ${failed} failed. Check console for details.`);
-      return;
-    }
-
-    toast.info(`Generating ZIP with ${added} files...`);
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const dlUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = 'riftdivers-assets.zip';
-    link.href = dlUrl;
-    link.click();
-    URL.revokeObjectURL(dlUrl);
-    toast.success(`ZIP DISPATCHED — ${added} assets. ${failed > 0 ? `${failed} failed.` : ''}`);
+    toast.success(`DOWNLOAD COMPLETE — ${globalAdded} assets in ${totalChunks} ZIPs.${globalFailed > 0 ? ` ${globalFailed} failed.` : ''}`);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
