@@ -693,7 +693,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">TIER</span>
           <select
             value={filterTier}
-            onChange={e => setFilterTier(e.target.value)}
+            onChange={e => { setFilterTier(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -704,7 +704,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">CATEGORY</span>
           <select
             value={filterCategory}
-            onChange={e => setFilterCategory(e.target.value)}
+            onChange={e => { setFilterCategory(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
