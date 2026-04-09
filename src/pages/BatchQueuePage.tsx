@@ -755,6 +755,13 @@ const BatchQueuePage = () => {
           >
             📥 DOWNLOAD ZIP
           </button>
+          <button
+            onClick={handleSyncToVault}
+            disabled={syncing}
+            className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-body disabled:opacity-50"
+          >
+            {syncing ? '⏳ SYNCING…' : '🔄 SYNC TO VAULT'}
+          </button>
           <button onClick={() => navigate('/generator')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">FORGE</button>
           <button onClick={() => navigate('/library')} className="text-xs text-muted-foreground hover:text-accent transition-colors font-body">VAULT</button>
           <button onClick={signOut} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">EXIT</button>
