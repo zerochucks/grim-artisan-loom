@@ -136,12 +136,7 @@ const BatchQueuePage = () => {
   };
 
   const getFilteredAssets = () => {
-    return assets.filter(a => {
-      if (filterTier !== 'all' && a.tier !== filterTier) return false;
-      if (filterStatus !== 'all' && a.qa_status !== filterStatus) return false;
-      if (filterCategory !== 'all' && (a.category || 'misc') !== filterCategory) return false;
-      return true;
-    });
+    return assets; // filtering is now server-side
   };
 
   const generateSingle = async (assetKey: string) => {
