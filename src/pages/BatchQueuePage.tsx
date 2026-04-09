@@ -546,6 +546,81 @@ const BatchQueuePage = () => {
     toast.success(`DOWNLOAD COMPLETE — ${globalAdded} assets in ${totalChunks} ZIPs.${globalFailed > 0 ? ` ${globalFailed} failed.` : ''}`);
   };
 
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncToVault = async () => {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      // Fetch all approved assets with storage URLs
+      const allApproved: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('sprite_assets')
+          .select('asset_key, tier, target_w, target_h, storage_url, prompt_template')
+          .eq('qa_status', 'approved')
+          .not('storage_url', 'is', null)
+          .order('asset_key')
+          .range(from, from + 999);
+        if (error || !data || data.length === 0) break;
+        allApproved.push(...data);
+        if (data.length < 1000) break;
+        from += 1000;
+      }
+
+      if (allApproved.length === 0) {
+        toast.info('No approved assets to sync.');
+        setSyncing(false);
+        return;
+      }
+
+      // Fetch existing vault entries by source_asset_key
+      const { data: existingVault } = await supabase
+        .from('assets')
+        .select('source_asset_key, version')
+        .eq('user_id', user.id)
+        .not('source_asset_key', 'is', null);
+
+      const vaultMap = new Map<string, number>();
+      for (const e of existingVault || []) {
+        const cur = vaultMap.get(e.source_asset_key!) || 0;
+        if (e.version > cur) vaultMap.set(e.source_asset_key!, e.version);
+      }
+
+      let inserted = 0;
+      let skipped = 0;
+      for (const asset of allApproved) {
+        const existingVersion = vaultMap.get(asset.asset_key);
+        // Skip if already in vault with same URL (no re-generation happened)
+        if (existingVersion !== undefined) {
+          skipped++;
+          continue;
+        }
+        const { error } = await supabase.from('assets').insert({
+          user_id: user.id,
+          name: asset.asset_key,
+          prompt: asset.prompt_template || '',
+          asset_type: asset.tier,
+          width: asset.target_w,
+          height: asset.target_h,
+          image_url: asset.storage_url,
+          generation_mode: 'batch',
+          version: 1,
+          source_asset_key: asset.asset_key,
+        });
+        if (!error) inserted++;
+      }
+
+      toast.success(`VAULT SYNC: ${inserted} new, ${skipped} already synced.`);
+    } catch (e) {
+      console.error('Sync failed:', e);
+      toast.error('Vault sync failed.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAssets = getFilteredAssets();
