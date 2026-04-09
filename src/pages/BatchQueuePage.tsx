@@ -77,9 +77,22 @@ const BatchQueuePage = () => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('sprite_assets')
-      .select('id,asset_key,tier,category,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
+      .select('id,asset_key,tier,category,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' });
+
+    // Server-side filters
+    if (filterTier !== 'all') query = query.eq('tier', filterTier);
+    if (filterStatus !== 'all') query = query.eq('qa_status', filterStatus);
+    if (filterCategory !== 'all') {
+      if (filterCategory === 'misc') {
+        query = query.or('category.eq.misc,category.is.null');
+      } else {
+        query = query.eq('category', filterCategory);
+      }
+    }
+
+    const { data, error, count } = await query
       .order('tier')
       .order('asset_key')
       .range(from, to);
@@ -92,7 +105,7 @@ const BatchQueuePage = () => {
     setAssets((data as unknown as SpriteAssetRow[]) || []);
     if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, [page]);
+  }, [page, filterTier, filterStatus, filterCategory]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
