@@ -1011,7 +1011,7 @@ const BatchQueuePage = () => {
                   <img
                     src={previewAsset.storage_url}
                     alt={previewAsset.asset_key}
-                    className="max-w-full max-h-[70vh] object-contain"
+                    className="max-w-full max-h-[50vh] object-contain"
                     style={{ imageRendering: 'pixelated' }}
                   />
                 </div>
