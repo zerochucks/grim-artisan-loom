@@ -71,15 +71,32 @@ const BatchQueuePage = () => {
   const PAGE_SIZE = 100;
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [globalTiers, setGlobalTiers] = useState<string[]>([]);
+  const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
+  const [globalCategories, setGlobalCategories] = useState<string[]>([]);
+  const [globalStats, setGlobalStats] = useState<Record<string, number>>({});
 
   const fetchAssets = useCallback(async () => {
     setLoading(true);
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('sprite_assets')
-      .select('id,asset_key,tier,category,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' })
+      .select('id,asset_key,tier,category,unity_path,target_w,target_h,frame_count,ppu,filter_mode,primary_color,prompt_template,storage_url,qa_status,approved,user_id,created_at', { count: 'exact' });
+
+    // Server-side filters
+    if (filterTier !== 'all') query = query.eq('tier', filterTier);
+    if (filterStatus !== 'all') query = query.eq('qa_status', filterStatus);
+    if (filterCategory !== 'all') {
+      if (filterCategory === 'misc') {
+        query = query.or('category.eq.misc,category.is.null');
+      } else {
+        query = query.eq('category', filterCategory);
+      }
+    }
+
+    const { data, error, count } = await query
       .order('tier')
       .order('asset_key')
       .range(from, to);
@@ -92,7 +109,7 @@ const BatchQueuePage = () => {
     setAssets((data as unknown as SpriteAssetRow[]) || []);
     if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, [page]);
+  }, [page, filterTier, filterStatus, filterCategory]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
@@ -123,12 +140,7 @@ const BatchQueuePage = () => {
   };
 
   const getFilteredAssets = () => {
-    return assets.filter(a => {
-      if (filterTier !== 'all' && a.tier !== filterTier) return false;
-      if (filterStatus !== 'all' && a.qa_status !== filterStatus) return false;
-      if (filterCategory !== 'all' && (a.category || 'misc') !== filterCategory) return false;
-      return true;
-    });
+    return assets; // filtering is now server-side
   };
 
   const generateSingle = async (assetKey: string) => {
@@ -537,17 +549,39 @@ const BatchQueuePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAssets = getFilteredAssets();
-  const tiers = [...new Set(assets.map(a => a.tier))].sort();
-  const statuses = [...new Set(assets.map(a => a.qa_status))].sort();
-  const categories = [...new Set(assets.map(a => a.category || 'misc'))].sort();
+
+  useEffect(() => {
+    const fetchGlobalMeta = async () => {
+      const { data: allRows } = await supabase
+        .from('sprite_assets')
+        .select('tier, category, qa_status');
+      if (!allRows) return;
+      setGlobalTiers([...new Set(allRows.map((a: any) => a.tier))].sort());
+      setGlobalStatuses([...new Set(allRows.map((a: any) => a.qa_status))].sort());
+      setGlobalCategories([...new Set(allRows.map((a: any) => a.category || 'misc'))].sort());
+      const counts: Record<string, number> = {};
+      let total = 0;
+      for (const r of allRows) {
+        counts[r.qa_status] = (counts[r.qa_status] || 0) + 1;
+        total++;
+      }
+      counts.total = total;
+      setGlobalStats(counts);
+    };
+    fetchGlobalMeta();
+  }, []);
+
+  const tiers = globalTiers.length > 0 ? globalTiers : [...new Set(assets.map(a => a.tier))].sort();
+  const statuses = globalStatuses.length > 0 ? globalStatuses : [...new Set(assets.map(a => a.qa_status))].sort();
+  const categories = globalCategories.length > 0 ? globalCategories : [...new Set(assets.map(a => a.category || 'misc'))].sort();
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const stats = {
-    total: totalCount,
-    pending: assets.filter(a => a.qa_status === 'pending').length,
-    generated: assets.filter(a => a.qa_status === 'generated').length,
-    approved: assets.filter(a => a.qa_status === 'approved').length,
+    total: globalStats.total || totalCount,
+    pending: globalStats.pending || 0,
+    generated: globalStats.generated || 0,
+    approved: globalStats.approved || 0,
   };
 
   return (
@@ -659,7 +693,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">TIER</span>
           <select
             value={filterTier}
-            onChange={e => setFilterTier(e.target.value)}
+            onChange={e => { setFilterTier(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -670,7 +704,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">CATEGORY</span>
           <select
             value={filterCategory}
-            onChange={e => setFilterCategory(e.target.value)}
+            onChange={e => { setFilterCategory(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -681,7 +715,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">STATUS</span>
           <select
             value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
+            onChange={e => { setFilterStatus(e.target.value); setPage(0); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
