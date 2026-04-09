@@ -26,8 +26,10 @@ export type Database = {
           name: string
           palette_id: string | null
           prompt: string
+          source_asset_key: string | null
           style_modifiers: string[] | null
           user_id: string
+          version: number
           width: number
         }
         Insert: {
@@ -41,8 +43,10 @@ export type Database = {
           name: string
           palette_id?: string | null
           prompt: string
+          source_asset_key?: string | null
           style_modifiers?: string[] | null
           user_id: string
+          version?: number
           width: number
         }
         Update: {
@@ -56,8 +60,10 @@ export type Database = {
           name?: string
           palette_id?: string | null
           prompt?: string
+          source_asset_key?: string | null
           style_modifiers?: string[] | null
           user_id?: string
+          version?: number
           width?: number
         }
         Relationships: [
