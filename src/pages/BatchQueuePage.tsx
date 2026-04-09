@@ -549,10 +549,6 @@ const BatchQueuePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAssets = getFilteredAssets();
-  const [globalTiers, setGlobalTiers] = useState<string[]>([]);
-  const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
-  const [globalCategories, setGlobalCategories] = useState<string[]>([]);
-  const [globalStats, setGlobalStats] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const fetchGlobalMeta = async () => {
