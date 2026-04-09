@@ -235,13 +235,15 @@ const BatchQueuePage = () => {
   };
 
   const setQaStatus = async (assetKey: string, status: QaStatus) => {
-    const updateData: Record<string, unknown> = { qa_status: status };
-    if (status === 'approved') updateData.approved = true;
-    if (status === 'rejected') updateData.approved = false;
+    const approved = status === 'approved';
+    const rejected = status === 'rejected';
 
     const { error } = await supabase
       .from('sprite_assets')
-      .update(updateData)
+      .update({
+        qa_status: status,
+        approved: approved ? true : rejected ? false : undefined,
+      })
       .eq('asset_key', assetKey);
 
     if (error) {
@@ -249,11 +251,52 @@ const BatchQueuePage = () => {
       return;
     }
 
+    // On approval, save a versioned copy to the vault (assets table)
+    if (approved && user) {
+      const asset = assets.find(a => a.asset_key === assetKey);
+      if (asset && asset.storage_url) {
+        // Check existing versions for this asset_key
+        const { data: existing } = await supabase
+          .from('assets')
+          .select('version')
+          .eq('user_id', user.id)
+          .eq('name', asset.asset_key)
+          .order('version', { ascending: false })
+          .limit(1);
+
+        const nextVersion = (existing && existing.length > 0) ? existing[0].version + 1 : 1;
+
+        const { error: vaultError } = await supabase
+          .from('assets')
+          .insert({
+            user_id: user.id,
+            name: asset.asset_key,
+            prompt: asset.prompt_template || '',
+            asset_type: asset.tier,
+            width: asset.target_w,
+            height: asset.target_h,
+            image_url: asset.storage_url,
+            generation_mode: 'batch',
+            version: nextVersion,
+            source_asset_key: asset.asset_key,
+          });
+
+        if (vaultError) {
+          console.error('Vault save failed:', vaultError);
+          toast.error('Approved but failed to save to vault.');
+        } else {
+          toast.success(`${assetKey} → APPROVED (v${nextVersion} saved to vault)`);
+        }
+      }
+    }
+
     setAssets(prev => prev.map(a =>
-      a.asset_key === assetKey ? { ...a, qa_status: status, approved: status === 'approved' } : a
+      a.asset_key === assetKey ? { ...a, qa_status: status, approved } : a
     ));
 
-    toast.success(`${assetKey} → ${status.toUpperCase()}`);
+    if (!approved) {
+      toast.success(`${assetKey} → ${status.toUpperCase()}`);
+    }
   };
 
   const handleSavePrompt = async () => {
@@ -392,7 +435,7 @@ const BatchQueuePage = () => {
 
       const { error } = await supabase
         .from('sprite_assets')
-        .update(updateData)
+        .update(updateData as any)
         .eq('asset_key', assetKey);
 
       if (error) {
@@ -932,7 +975,7 @@ const BatchQueuePage = () => {
 
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-4 bg-card border-border p-6">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col items-center gap-4 bg-card border-border p-6 overflow-y-auto">
           <DialogTitle className="sr-only">Asset Preview</DialogTitle>
           <DialogDescription className="sr-only">Preview and QA the selected asset</DialogDescription>
           {previewAsset && (
