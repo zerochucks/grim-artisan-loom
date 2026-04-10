@@ -273,6 +273,7 @@ serve(async (req) => {
           messages: [{ role: "user", content: messageContent.length === 1 ? (messageContent[0] as any).text : messageContent }],
           modalities: ["image", "text"],
           temperature: isRegeneration ? 0.7 + (variationPct / 100) * 0.8 : 0.9,
+          max_tokens: 8192,
         }),
       });
 
@@ -300,22 +301,22 @@ serve(async (req) => {
       throw new Error(`AI gateway returned ${status}`);
     }
 
-    const contentType = response.headers.get("content-type") || "";
     const responseText = await response.text();
+    const trimmed = responseText.trim();
 
-    if (!contentType.includes("application/json")) {
-      console.error("AI gateway returned non-JSON:", contentType, responseText.substring(0, 200));
-      return new Response(JSON.stringify({ error: "AI gateway returned non-JSON response", retryable: true }), {
+    if (!trimmed) {
+      console.error("AI gateway returned empty response");
+      return new Response(JSON.stringify({ error: "AI gateway returned empty response", retryable: true }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     let data: Record<string, unknown>;
     try {
-      data = JSON.parse(responseText);
+      data = JSON.parse(trimmed);
     } catch {
-      console.error("Failed to parse AI response:", responseText.substring(0, 200));
-      return new Response(JSON.stringify({ error: "Invalid JSON from AI gateway", retryable: true }), {
+      console.error("Failed to parse AI response:", trimmed.substring(0, 300));
+      return new Response(JSON.stringify({ error: "AI returned unparseable response, retrying may help", retryable: true }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
