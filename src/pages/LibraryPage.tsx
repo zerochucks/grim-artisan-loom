@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ASSET_TYPES, type GeneratedAsset, type AssetTypeId } from '@/lib/forge-constants';
-import { downloadPNG, exportZip, createSpritesheetAsync, generateMetadataJSON } from '@/lib/export-utils';
+import { downloadPNG, exportZip, exportZipForUnity, createSpritesheetAsync, generateMetadataJSON } from '@/lib/export-utils';
 import { useNavigate } from 'react-router-dom';
 
 const LibraryPage = () => {
