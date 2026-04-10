@@ -235,12 +235,12 @@ export async function exportZipForUnity(
   zip.file('metadata.json', JSON.stringify(metadata, null, 2));
 
   for (const asset of assets) {
-    const base64 = asset.imageDataUrl.split(',')[1];
-    if (!base64) continue;
+    const data = await resolveAssetData(asset.imageDataUrl);
+    if (!data) continue;
 
     const uPath = (asset.sourceAssetKey && unityPathMap[asset.sourceAssetKey]) || asset.name;
     const filePath = uPath.endsWith('.png') ? uPath : `${uPath}.png`;
-    zip.file(filePath, base64, { base64: true });
+    zip.file(filePath, data);
   }
 
   const blob = await zip.generateAsync({ type: 'blob' });
