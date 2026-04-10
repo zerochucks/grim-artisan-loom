@@ -140,7 +140,9 @@ export interface GeneratedAsset {
   gridData?: string[];
   imageDataUrl: string;
   styleModifiers: string[];
-  generationMode: 'forge' | 'render' | 'scene';
+  generationMode: 'forge' | 'render' | 'scene' | 'batch';
   scenePiece?: string;
   createdAt: string;
+  sourceAssetKey?: string;
+  unityPath?: string;
 }
