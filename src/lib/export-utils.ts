@@ -147,6 +147,85 @@ export async function exportZip(assets: GeneratedAsset[]): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+const UNITY_README = `# Riftdivers Asset Import — Unity Settings
+===========================================
+
+## Required Import Settings (per texture)
+- Texture Type: Sprite (2D and UI)
+- Filter Mode: Point (no filter)
+- Compression: None
+- Generate Mip Maps: OFF
+- Max Size: match source dimensions
+
+## Quick Setup
+1. Drag the extracted folder into your Unity project's Assets directory.
+2. Select all imported textures (Ctrl+A in the folder).
+3. In the Inspector, apply the settings above.
+4. Click "Apply".
+
+## Folder Structure
+Assets are organized by their unity_path from the registry,
+mirroring the intended Unity project hierarchy.
+
+## Transparency
+All assets use PNG with alpha channel for transparent backgrounds.
+No additional setup is needed for transparency in Unity.
+`;
+
+/**
+ * Export assets as a Unity-ready ZIP with unity_path folder structure.
+ */
+export async function exportZipForUnity(
+  assets: GeneratedAsset[],
+  unityPathMap: Record<string, string>
+): Promise<void> {
+  const zip = new JSZip();
+
+  zip.file('README.txt', UNITY_README);
+
+  // Add metadata
+  const metadata = {
+    generator: 'Pixel Forge',
+    version: '1.0.0',
+    exportDate: new Date().toISOString(),
+    unityImportSettings: {
+      textureType: 'Sprite (2D and UI)',
+      filterMode: 'Point (no filter)',
+      compression: 'None',
+      generateMipMaps: false,
+    },
+    assets: assets.map((a) => {
+      const uPath = (a.sourceAssetKey && unityPathMap[a.sourceAssetKey]) || a.name;
+      return {
+        name: a.name,
+        unityPath: uPath,
+        type: a.assetType,
+        width: a.width,
+        height: a.height,
+        pixelsPerUnit: a.width,
+      };
+    }),
+  };
+  zip.file('metadata.json', JSON.stringify(metadata, null, 2));
+
+  for (const asset of assets) {
+    const base64 = asset.imageDataUrl.split(',')[1];
+    if (!base64) continue;
+
+    const uPath = (asset.sourceAssetKey && unityPathMap[asset.sourceAssetKey]) || asset.name;
+    const filePath = uPath.endsWith('.png') ? uPath : `${uPath}.png`;
+    zip.file(filePath, base64, { base64: true });
+  }
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'riftdivers-unity-assets.zip';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 /**
  * Generate metadata JSON for Unity import.
  */
