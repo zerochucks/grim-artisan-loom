@@ -75,6 +75,25 @@ const LibraryPage = () => {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.size === assets.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(assets.map((a) => a.id!)));
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const target = selectedIds.size > 0 ? selectedAssets : assets;
+    if (target.length === 0) {
+      toast.error('NO ASSETS TO DOWNLOAD.');
+      return;
+    }
+    toast.info(`PACKAGING ${target.length} ASSETS...`);
+    await exportZip(target);
+    toast.success('ZIP DISPATCHED.');
+  };
+
   const selectedAssets = assets.filter((a) => a.id && selectedIds.has(a.id));
 
   const handleBulkExportZip = async () => {
