@@ -95,6 +95,33 @@ const LibraryPage = () => {
     toast.success('ZIP DISPATCHED.');
   };
 
+  const handleDownloadForUnity = async () => {
+    const target = selectedIds.size > 0 ? selectedAssets : assets;
+    if (target.length === 0) {
+      toast.error('NO ASSETS TO DOWNLOAD.');
+      return;
+    }
+
+    toast.info(`PACKAGING ${target.length} ASSETS FOR UNITY...`);
+
+    // Fetch unity_path mappings from sprite_assets for all source_asset_keys
+    const keys = target.map((a) => a.sourceAssetKey).filter(Boolean) as string[];
+    let unityPathMap: Record<string, string> = {};
+
+    if (keys.length > 0) {
+      const { data } = await supabase
+        .from('sprite_assets')
+        .select('asset_key, unity_path')
+        .in('asset_key', keys);
+      if (data) {
+        unityPathMap = Object.fromEntries(data.map((r) => [r.asset_key, r.unity_path]));
+      }
+    }
+
+    await exportZipForUnity(target, unityPathMap);
+    toast.success('UNITY ZIP DISPATCHED.');
+  };
+
   const selectedAssets = assets.filter((a) => a.id && selectedIds.has(a.id));
 
   const handleBulkExportZip = async () => {
