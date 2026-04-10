@@ -56,6 +56,7 @@ const LibraryPage = () => {
           styleModifiers: row.style_modifiers || [],
           generationMode: row.generation_mode || 'forge',
           createdAt: row.created_at,
+          sourceAssetKey: row.source_asset_key || undefined,
         }))
       );
     }
