@@ -224,6 +224,9 @@ const LibraryPage = () => {
         <Button size="sm" variant="default" onClick={handleDownloadAll} className="text-xs h-8">
           {selectedIds.size > 0 ? `DOWNLOAD ${selectedIds.size}` : 'DOWNLOAD ALL'}
         </Button>
+        <Button size="sm" variant="default" onClick={handleDownloadForUnity} className="text-xs h-8 bg-accent hover:bg-accent/90">
+          🎮 UNITY ZIP
+        </Button>
         <Button size="sm" variant="outline" onClick={handleBulkExportZip} className="text-xs h-8">
           ZIP
         </Button>
