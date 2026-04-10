@@ -75,6 +75,25 @@ const LibraryPage = () => {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedIds.size === assets.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(assets.map((a) => a.id!)));
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    const target = selectedIds.size > 0 ? selectedAssets : assets;
+    if (target.length === 0) {
+      toast.error('NO ASSETS TO DOWNLOAD.');
+      return;
+    }
+    toast.info(`PACKAGING ${target.length} ASSETS...`);
+    await exportZip(target);
+    toast.success('ZIP DISPATCHED.');
+  };
+
   const selectedAssets = assets.filter((a) => a.id && selectedIds.has(a.id));
 
   const handleBulkExportZip = async () => {
@@ -171,6 +190,12 @@ const LibraryPage = () => {
         {selectedIds.size > 0 && (
           <span className="text-xs text-accent">{selectedIds.size} selected</span>
         )}
+        <Button size="sm" variant="outline" onClick={handleSelectAll} className="text-xs h-8">
+          {selectedIds.size === assets.length && assets.length > 0 ? 'DESELECT ALL' : 'SELECT ALL'}
+        </Button>
+        <Button size="sm" variant="default" onClick={handleDownloadAll} className="text-xs h-8">
+          {selectedIds.size > 0 ? `DOWNLOAD ${selectedIds.size}` : 'DOWNLOAD ALL'}
+        </Button>
         <Button size="sm" variant="outline" onClick={handleBulkExportZip} className="text-xs h-8">
           ZIP
         </Button>
