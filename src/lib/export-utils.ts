@@ -2,6 +2,31 @@ import JSZip from 'jszip';
 import type { GeneratedAsset } from './forge-constants';
 
 /**
+ * Resolve an image source (data URL or HTTP URL) to a Uint8Array for zipping.
+ */
+async function resolveAssetData(src: string): Promise<Uint8Array | null> {
+  if (!src) return null;
+
+  if (src.startsWith('data:')) {
+    const base64 = src.split(',')[1];
+    if (!base64) return null;
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  // HTTP URL — fetch the binary
+  try {
+    const resp = await fetch(src);
+    if (!resp.ok) return null;
+    return new Uint8Array(await resp.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Download a single PNG from a data URL.
  */
 export function downloadPNG(dataUrl: string, filename: string) {
@@ -118,9 +143,10 @@ export async function exportZip(assets: GeneratedAsset[]): Promise<void> {
   const zip = new JSZip();
 
   for (const asset of assets) {
-    const base64 = asset.imageDataUrl.split(',')[1];
-    if (base64) {
-      zip.file(asset.name, base64, { base64: true });
+    const data = await resolveAssetData(asset.imageDataUrl);
+    if (data) {
+      const filename = asset.name.endsWith('.png') ? asset.name : `${asset.name}.png`;
+      zip.file(filename, data);
     }
   }
 
