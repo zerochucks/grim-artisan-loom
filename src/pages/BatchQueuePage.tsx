@@ -68,8 +68,6 @@ const BatchQueuePage = () => {
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [variationStrength, setVariationStrength] = useState(50);
-  const PAGE_SIZE = 100;
-  const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [globalTiers, setGlobalTiers] = useState<string[]>([]);
   const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
@@ -78,8 +76,6 @@ const BatchQueuePage = () => {
 
   const fetchAssets = useCallback(async () => {
     setLoading(true);
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
 
     let query = supabase
       .from('sprite_assets')
@@ -99,7 +95,7 @@ const BatchQueuePage = () => {
     const { data, error, count } = await query
       .order('tier')
       .order('asset_key')
-      .range(from, to);
+      .limit(5000);
 
     if (error) {
       toast.error(`Failed to load assets: ${error.message}`);
@@ -109,7 +105,7 @@ const BatchQueuePage = () => {
     setAssets((data as unknown as SpriteAssetRow[]) || []);
     if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, [page, filterTier, filterStatus, filterCategory]);
+  }, [filterTier, filterStatus, filterCategory]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
@@ -650,8 +646,6 @@ const BatchQueuePage = () => {
   const statuses = globalStatuses.length > 0 ? globalStatuses : [...new Set(assets.map(a => a.qa_status))].sort();
   const categories = globalCategories.length > 0 ? globalCategories : [...new Set(assets.map(a => a.category || 'misc'))].sort();
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
   const stats = {
     total: globalStats.total || totalCount,
     pending: globalStats.pending || 0,
@@ -775,7 +769,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">TIER</span>
           <select
             value={filterTier}
-            onChange={e => { setFilterTier(e.target.value); setPage(0); }}
+            onChange={e => { setFilterTier(e.target.value); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -786,7 +780,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">CATEGORY</span>
           <select
             value={filterCategory}
-            onChange={e => { setFilterCategory(e.target.value); setPage(0); }}
+            onChange={e => { setFilterCategory(e.target.value); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -797,7 +791,7 @@ const BatchQueuePage = () => {
           <span className="text-[10px] font-display text-muted-foreground tracking-widest">STATUS</span>
           <select
             value={filterStatus}
-            onChange={e => { setFilterStatus(e.target.value); setPage(0); }}
+            onChange={e => { setFilterStatus(e.target.value); }}
             className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body"
           >
             <option value="all">ALL</option>
@@ -1041,52 +1035,12 @@ const BatchQueuePage = () => {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border px-4 py-2">
-          <span className="text-[10px] font-body text-muted-foreground">
-            Page {page + 1} of {totalPages} · Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[10px] font-display tracking-wider"
-              disabled={page === 0}
-              onClick={() => setPage(0)}
-            >
-              ⟨⟨ FIRST
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[10px] font-display tracking-wider"
-              disabled={page === 0}
-              onClick={() => setPage(p => p - 1)}
-            >
-              ⟨ PREV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[10px] font-display tracking-wider"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(p => p + 1)}
-            >
-              NEXT ⟩
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[10px] font-display tracking-wider"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(totalPages - 1)}
-            >
-              LAST ⟩⟩
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Asset count */}
+      <div className="border-t border-border px-4 py-2">
+        <span className="text-[10px] font-body text-muted-foreground">
+          Showing {assets.length} of {totalCount} assets
+        </span>
+      </div>
 
       {/* Preview Modal */}
       <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
