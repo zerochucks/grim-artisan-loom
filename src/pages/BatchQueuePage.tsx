@@ -68,8 +68,6 @@ const BatchQueuePage = () => {
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [variationStrength, setVariationStrength] = useState(50);
-  const PAGE_SIZE = 100;
-  const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [globalTiers, setGlobalTiers] = useState<string[]>([]);
   const [globalStatuses, setGlobalStatuses] = useState<string[]>([]);
