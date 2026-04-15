@@ -30,6 +30,15 @@ interface SpriteAssetRow {
   primary_color: string | null;
 }
 
+interface FrameManifest {
+  asset_key: string;
+  frame_count: number;
+  cell_w: number;
+  cell_h: number;
+  frames: { index: number; name: string; group: string; url: string }[];
+  clips: { name: string; frames: number[]; fps: number; loop: boolean }[];
+}
+
 type QaStatus = 'pending' | 'queued' | 'generating' | 'generated' | 'approved' | 'rejected';
 
 const STATUS_COLORS: Record<string, string> = {
