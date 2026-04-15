@@ -504,9 +504,9 @@ serve(async (req) => {
             asset_key,
             tier: spec.tier,
             frame_count: frameCount,
-            cell_w: Math.round((spec.target_w as number) / frameCount),
+            cell_w: spec.target_h as number, // square cells (128×128)
             cell_h: spec.target_h as number,
-            strip_w: spec.target_w as number,
+            strip_w: (spec.target_h as number) * frameCount,
             strip_h: spec.target_h as number,
             frames: frameActions.map((action, i) => ({
               index: i,
