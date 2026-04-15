@@ -164,11 +164,11 @@ ${MATERIAL_DICT}
 ${referenceNote}
 
 ═══ NEGATIVE ═══
-${NEG_BASE}, no gradients, no blur, no anti-aliasing, no photorealism, no ink illustration, no painterly texture, no sprite sheet, no multiple frames, no grid layout
+${NEG_BASE}, no gradients, no blur, no anti-aliasing, no photorealism, no ink illustration, no painterly texture, no sprite sheet, no multiple frames, no grid layout, no solid background, no black background, no #0C0C14 background
 
 ═══ QA SELF-CHECK ═══
 ${QA_PIXEL}
-✓ Output is exactly ${cellW}×${cellH} px ✓ Single frame only ✓ Feet anchored to same row`;
+✓ Output is exactly ${cellW}×${cellH} px ✓ Single frame only ✓ Feet anchored to same row ✓ Background is TRANSPARENT (alpha channel)`;
 }
 
 // ─── NON-ANIMATED PROMPT BUILDER (unchanged logic) ───────────────
