@@ -52,7 +52,7 @@ DON'T: smoke that becomes AA blur, spark noise, soft glow, gradient-heavy render
 Background: SOLID #0C0C14`,
   unit: `DO: consistent proportions across ALL frames, clear silhouette, root-pin feet to consistent pixel row
 DON'T: vary character size between frames, add extra frames, change aspect ratio, gradients
-Background: SOLID #0C0C14`,
+Background: TRANSPARENT (alpha channel, no solid fill, no #0C0C14)`,
   font: `DO: consistent stroke weight, readable at target size, pixel-perfect grid alignment
 DON'T: anti-aliased curves, sub-pixel rendering, variable stroke weight
 Background: SOLID #0C0C14`,
@@ -124,8 +124,8 @@ function buildSingleFramePrompt(
   const tier = spec.tier as string;
   const prompt = spec.prompt_template as string;
   const primaryColor = spec.primary_color as string | null;
-  // Each frame is generated at cell size (e.g. 128×128 for units)
-  const cellW = Math.round((spec.target_w as number) / totalFrames);
+  // Per-frame: each frame is one cell (128×128 for units, or target_h × target_h square)
+  const cellW = spec.target_h as number; // cells are square (128×128)
   const cellH = spec.target_h as number;
 
   const colorNote = primaryColor ? `Primary accent color: ${primaryColor}` : "";
@@ -157,18 +157,18 @@ CRITICAL CONSISTENCY RULES:
 - Feet pinned to the SAME pixel row (root-anchored) — no vertical bobbing
 - Same head size, same body proportions, same silhouette width
 - Only the POSE changes between frames — nothing else
-- Background: SOLID #0C0C14
+- Background: FULLY TRANSPARENT (alpha channel). Do NOT fill background with any color. No #0C0C14. No black. Pure transparency.
 
 ═══ MATERIALS ═══
 ${MATERIAL_DICT}
 ${referenceNote}
 
 ═══ NEGATIVE ═══
-${NEG_BASE}, no gradients, no blur, no anti-aliasing, no photorealism, no ink illustration, no painterly texture, no sprite sheet, no multiple frames, no grid layout
+${NEG_BASE}, no gradients, no blur, no anti-aliasing, no photorealism, no ink illustration, no painterly texture, no sprite sheet, no multiple frames, no grid layout, no solid background, no black background, no #0C0C14 background
 
 ═══ QA SELF-CHECK ═══
 ${QA_PIXEL}
-✓ Output is exactly ${cellW}×${cellH} px ✓ Single frame only ✓ Feet anchored to same row`;
+✓ Output is exactly ${cellW}×${cellH} px ✓ Single frame only ✓ Feet anchored to same row ✓ Background is TRANSPARENT (alpha channel)`;
 }
 
 // ─── NON-ANIMATED PROMPT BUILDER (unchanged logic) ───────────────
@@ -504,9 +504,9 @@ serve(async (req) => {
             asset_key,
             tier: spec.tier,
             frame_count: frameCount,
-            cell_w: Math.round((spec.target_w as number) / frameCount),
+            cell_w: spec.target_h as number, // square cells (128×128)
             cell_h: spec.target_h as number,
-            strip_w: spec.target_w as number,
+            strip_w: (spec.target_h as number) * frameCount,
             strip_h: spec.target_h as number,
             frames: frameActions.map((action, i) => ({
               index: i,
