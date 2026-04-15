@@ -514,8 +514,13 @@ serve(async (req) => {
             const framePath = `${asset_key}/frame_${i}_${action.name}-${versionTag}.${ext}`;
 
             const binaryStr = atob(base64Data);
-            const bytes = new Uint8Array(binaryStr.length);
+            let bytes = new Uint8Array(binaryStr.length);
             for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+
+            // Post-process: strip #0C0C14 background to alpha
+            if (mimeType === "image/png") {
+              bytes = stripBackground(bytes);
+            }
 
             const { error: uploadErr } = await supabase.storage
               .from("pixel-assets")
@@ -687,8 +692,13 @@ serve(async (req) => {
     const filePath = `${asset_key}-${versionTag}.${ext}`;
 
     const binaryStr = atob(base64Data);
-    const bytes = new Uint8Array(binaryStr.length);
+    let bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+
+    // Post-process: strip #0C0C14 background to alpha (non-background tiers only)
+    if (mimeType === "image/png" && spec.tier !== "background") {
+      bytes = stripBackground(bytes);
+    }
 
     const { error: uploadErr } = await supabase.storage
       .from("pixel-assets")
