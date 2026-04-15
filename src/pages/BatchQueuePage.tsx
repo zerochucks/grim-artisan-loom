@@ -1101,7 +1101,7 @@ const BatchQueuePage = () => {
                           onClick={() => setPreviewAsset(asset)}
                           title="Click to preview frames"
                         >
-                          <ManifestPreview url={asset.storage_url} compact />
+                          <ManifestPreview url={asset.storage_url} compact expectedFrameCount={asset.frame_count} />
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
@@ -1261,7 +1261,7 @@ const BatchQueuePage = () => {
               {previewAsset.storage_url && (
                 isManifestUrl(previewAsset.storage_url) ? (
                   <div className="w-full">
-                    <ManifestPreview url={previewAsset.storage_url} />
+                    <ManifestPreview url={previewAsset.storage_url} expectedFrameCount={previewAsset.frame_count} />
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center overflow-auto bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:16px_16px] rounded border border-border p-4 w-full">
