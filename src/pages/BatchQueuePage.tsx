@@ -124,6 +124,12 @@ function ManifestPreview({ url, compact = false, expectedFrameCount }: { url: st
 
   return (
     <div className="space-y-3 w-full">
+      {/* Frame count warning */}
+      {frameCountMismatch && (
+        <div className="flex items-center gap-2 px-2 py-1 bg-amber-900/30 border border-amber-700/50 text-amber-400 text-[9px] font-display tracking-wider">
+          ⚠️ FRAME MISMATCH: Expected {expectedFrameCount} frames, got {manifest.frames.length}
+        </div>
+      )}
       {/* Group filter tabs */}
       <div className="flex items-center gap-2">
         <span className="text-[9px] font-display text-muted-foreground tracking-widest">GROUPS:</span>
@@ -152,20 +158,26 @@ function ManifestPreview({ url, compact = false, expectedFrameCount }: { url: st
       </div>
       {/* Frame grid */}
       <div className="grid grid-cols-5 gap-2">
-        {displayFrames.map(f => (
-          <div key={f.index} className="flex flex-col items-center gap-1">
-            <div className="bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:8px_8px] border border-border p-1 flex items-center justify-center">
-              <img
-                src={f.url}
-                alt={f.name}
-                className="w-20 h-20 object-contain"
-                style={{ imageRendering: 'pixelated' }}
-              />
+        {displayFrames.map(f => {
+          const dims = frameDims[f.index];
+          return (
+            <div key={f.index} className="flex flex-col items-center gap-1">
+              <div className="bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:8px_8px] border border-border p-1 flex items-center justify-center">
+                <img
+                  src={f.url}
+                  alt={f.name}
+                  className="w-20 h-20 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </div>
+              <span className="text-[8px] font-display text-accent tracking-wider">{f.name}</span>
+              <span className="text-[7px] text-muted-foreground">{f.group}</span>
+              {dims && (
+                <span className="text-[7px] text-muted-foreground">{dims.w}×{dims.h}</span>
+              )}
             </div>
-            <span className="text-[8px] font-display text-accent tracking-wider">{f.name}</span>
-            <span className="text-[7px] text-muted-foreground">{f.group}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {/* Clips info */}
       {manifest.clips && manifest.clips.length > 0 && (
