@@ -52,7 +52,7 @@ DON'T: smoke that becomes AA blur, spark noise, soft glow, gradient-heavy render
 Background: SOLID #0C0C14`,
   unit: `DO: consistent proportions across ALL frames, clear silhouette, root-pin feet to consistent pixel row
 DON'T: vary character size between frames, add extra frames, change aspect ratio, gradients
-Background: SOLID #0C0C14`,
+Background: TRANSPARENT (alpha channel, no solid fill, no #0C0C14)`,
   font: `DO: consistent stroke weight, readable at target size, pixel-perfect grid alignment
 DON'T: anti-aliased curves, sub-pixel rendering, variable stroke weight
 Background: SOLID #0C0C14`,
