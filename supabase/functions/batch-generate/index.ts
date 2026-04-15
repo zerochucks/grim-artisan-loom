@@ -157,7 +157,7 @@ CRITICAL CONSISTENCY RULES:
 - Feet pinned to the SAME pixel row (root-anchored) — no vertical bobbing
 - Same head size, same body proportions, same silhouette width
 - Only the POSE changes between frames — nothing else
-- Background: SOLID #0C0C14
+- Background: FULLY TRANSPARENT (alpha channel). Do NOT fill background with any color. No #0C0C14. No black. Pure transparency.
 
 ═══ MATERIALS ═══
 ${MATERIAL_DICT}
