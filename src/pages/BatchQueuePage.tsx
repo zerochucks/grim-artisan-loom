@@ -175,7 +175,38 @@ const BatchQueuePage = () => {
           throw new Error(data.error);
         }
 
-        // Success — break out of retry loop
+        // Async animated asset — poll for completion
+        if (data?.mode === 'per_frame_async') {
+          toast.info(`${assetKey}: generating ${data.message || 'frames in background'}…`);
+          const POLL_INTERVAL = 8000;
+          const MAX_POLLS = 90; // ~12 minutes max
+          for (let poll = 0; poll < MAX_POLLS; poll++) {
+            await new Promise(r => setTimeout(r, POLL_INTERVAL));
+            const { data: row } = await supabase
+              .from('sprite_assets')
+              .select('qa_status, storage_url')
+              .eq('asset_key', assetKey)
+              .single();
+            if (!row) break;
+            if (row.qa_status === 'generated') {
+              setAssets(prev => prev.map(a =>
+                a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: row.storage_url } : a
+              ));
+              toast.success(`${assetKey} generated (async)`);
+              return true;
+            }
+            if (row.qa_status === 'rejected') {
+              throw new Error('Background generation failed');
+            }
+            // Still generating — update UI
+            setAssets(prev => prev.map(a =>
+              a.asset_key === assetKey ? { ...a, qa_status: 'generating' } : a
+            ));
+          }
+          throw new Error('Generation timed out after polling');
+        }
+
+        // Synchronous success — break out of retry loop
         const retries = data?.retries ?? 0;
         setAssets(prev => prev.map(a =>
           a.asset_key === assetKey ? { ...a, qa_status: 'generated', storage_url: data.image } : a
