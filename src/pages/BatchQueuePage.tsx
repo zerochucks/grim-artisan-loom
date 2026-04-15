@@ -60,6 +60,111 @@ const TIER_ICONS: Record<string, string> = {
   node: '🔮',
 };
 
+function isManifestUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.endsWith('.json') || url.includes('manifest');
+}
+
+function ManifestPreview({ url, compact = false }: { url: string; compact?: boolean }) {
+  const [manifest, setManifest] = useState<FrameManifest | null>(null);
+  const [error, setError] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => { if (!cancelled) setManifest(data); })
+      .catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (error) return <span className="text-[9px] text-destructive">manifest error</span>;
+  if (!manifest) return <span className="text-[9px] text-muted-foreground animate-pulse">loading frames…</span>;
+
+  const groups = [...new Set(manifest.frames.map(f => f.group))];
+  const displayFrames = selectedGroup
+    ? manifest.frames.filter(f => f.group === selectedGroup)
+    : manifest.frames;
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-1">
+        {manifest.frames.slice(0, 4).map(f => (
+          <img
+            key={f.index}
+            src={f.url}
+            alt={f.name}
+            className="h-8 border border-border bg-card"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        ))}
+        {manifest.frames.length > 4 && (
+          <span className="text-[8px] text-muted-foreground">+{manifest.frames.length - 4}</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 w-full">
+      {/* Group filter tabs */}
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] font-display text-muted-foreground tracking-widest">GROUPS:</span>
+        <button
+          onClick={() => setSelectedGroup(null)}
+          className={`text-[9px] font-display tracking-wider px-2 py-0.5 border transition-colors ${
+            !selectedGroup ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          ALL ({manifest.frames.length})
+        </button>
+        {groups.map(g => {
+          const count = manifest.frames.filter(f => f.group === g).length;
+          return (
+            <button
+              key={g}
+              onClick={() => setSelectedGroup(g)}
+              className={`text-[9px] font-display tracking-wider px-2 py-0.5 border transition-colors ${
+                selectedGroup === g ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {g.toUpperCase()} ({count})
+            </button>
+          );
+        })}
+      </div>
+      {/* Frame grid */}
+      <div className="grid grid-cols-5 gap-2">
+        {displayFrames.map(f => (
+          <div key={f.index} className="flex flex-col items-center gap-1">
+            <div className="bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:8px_8px] border border-border p-1 flex items-center justify-center">
+              <img
+                src={f.url}
+                alt={f.name}
+                className="w-20 h-20 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+            <span className="text-[8px] font-display text-accent tracking-wider">{f.name}</span>
+            <span className="text-[7px] text-muted-foreground">{f.group}</span>
+          </div>
+        ))}
+      </div>
+      {/* Clips info */}
+      {manifest.clips && manifest.clips.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {manifest.clips.map(c => (
+            <span key={c.name} className="text-[8px] font-body text-muted-foreground border border-border px-1.5 py-0.5">
+              {c.name}: frames {c.frames.join(',')} @ {c.fps}fps {c.loop ? '🔁' : '▶️'}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const BatchQueuePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
