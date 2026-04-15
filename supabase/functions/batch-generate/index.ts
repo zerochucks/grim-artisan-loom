@@ -124,8 +124,8 @@ function buildSingleFramePrompt(
   const tier = spec.tier as string;
   const prompt = spec.prompt_template as string;
   const primaryColor = spec.primary_color as string | null;
-  // Each frame is generated at cell size (e.g. 128×128 for units)
-  const cellW = Math.round((spec.target_w as number) / totalFrames);
+  // Per-frame: each frame is one cell (128×128 for units, or target_h × target_h square)
+  const cellW = spec.target_h as number; // cells are square (128×128)
   const cellH = spec.target_h as number;
 
   const colorNote = primaryColor ? `Primary accent color: ${primaryColor}` : "";
