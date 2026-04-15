@@ -65,10 +65,11 @@ function isManifestUrl(url: string | null): boolean {
   return url.endsWith('.json') || url.includes('manifest');
 }
 
-function ManifestPreview({ url, compact = false }: { url: string; compact?: boolean }) {
+function ManifestPreview({ url, compact = false, expectedFrameCount }: { url: string; compact?: boolean; expectedFrameCount?: number }) {
   const [manifest, setManifest] = useState<FrameManifest | null>(null);
   const [error, setError] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [frameDims, setFrameDims] = useState<Record<number, { w: number; h: number }>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +80,16 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
     return () => { cancelled = true; };
   }, [url]);
 
+  // Load image dimensions for each frame
+  useEffect(() => {
+    if (!manifest) return;
+    manifest.frames.forEach(f => {
+      const img = new Image();
+      img.onload = () => setFrameDims(prev => ({ ...prev, [f.index]: { w: img.naturalWidth, h: img.naturalHeight } }));
+      img.src = f.url;
+    });
+  }, [manifest]);
+
   if (error) return <span className="text-[9px] text-destructive">manifest error</span>;
   if (!manifest) return <span className="text-[9px] text-muted-foreground animate-pulse">loading frames…</span>;
 
@@ -87,9 +98,14 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
     ? manifest.frames.filter(f => f.group === selectedGroup)
     : manifest.frames;
 
+  const frameCountMismatch = expectedFrameCount && manifest.frames.length !== expectedFrameCount;
+
   if (compact) {
     return (
       <div className="flex items-center gap-1">
+        {frameCountMismatch && (
+          <span className="text-[8px] text-amber-400 font-display" title={`Expected ${expectedFrameCount} frames, got ${manifest.frames.length}`}>⚠️</span>
+        )}
         {manifest.frames.slice(0, 4).map(f => (
           <img
             key={f.index}
@@ -108,6 +124,12 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
 
   return (
     <div className="space-y-3 w-full">
+      {/* Frame count warning */}
+      {frameCountMismatch && (
+        <div className="flex items-center gap-2 px-2 py-1 bg-amber-900/30 border border-amber-700/50 text-amber-400 text-[9px] font-display tracking-wider">
+          ⚠️ FRAME MISMATCH: Expected {expectedFrameCount} frames, got {manifest.frames.length}
+        </div>
+      )}
       {/* Group filter tabs */}
       <div className="flex items-center gap-2">
         <span className="text-[9px] font-display text-muted-foreground tracking-widest">GROUPS:</span>
@@ -136,20 +158,26 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
       </div>
       {/* Frame grid */}
       <div className="grid grid-cols-5 gap-2">
-        {displayFrames.map(f => (
-          <div key={f.index} className="flex flex-col items-center gap-1">
-            <div className="bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:8px_8px] border border-border p-1 flex items-center justify-center">
-              <img
-                src={f.url}
-                alt={f.name}
-                className="w-20 h-20 object-contain"
-                style={{ imageRendering: 'pixelated' }}
-              />
+        {displayFrames.map(f => {
+          const dims = frameDims[f.index];
+          return (
+            <div key={f.index} className="flex flex-col items-center gap-1">
+              <div className="bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:8px_8px] border border-border p-1 flex items-center justify-center">
+                <img
+                  src={f.url}
+                  alt={f.name}
+                  className="w-20 h-20 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </div>
+              <span className="text-[8px] font-display text-accent tracking-wider">{f.name}</span>
+              <span className="text-[7px] text-muted-foreground">{f.group}</span>
+              {dims && (
+                <span className="text-[7px] text-muted-foreground">{dims.w}×{dims.h}</span>
+              )}
             </div>
-            <span className="text-[8px] font-display text-accent tracking-wider">{f.name}</span>
-            <span className="text-[7px] text-muted-foreground">{f.group}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
       {/* Clips info */}
       {manifest.clips && manifest.clips.length > 0 && (
@@ -1073,7 +1101,7 @@ const BatchQueuePage = () => {
                           onClick={() => setPreviewAsset(asset)}
                           title="Click to preview frames"
                         >
-                          <ManifestPreview url={asset.storage_url} compact />
+                          <ManifestPreview url={asset.storage_url} compact expectedFrameCount={asset.frame_count} />
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
@@ -1233,7 +1261,7 @@ const BatchQueuePage = () => {
               {previewAsset.storage_url && (
                 isManifestUrl(previewAsset.storage_url) ? (
                   <div className="w-full">
-                    <ManifestPreview url={previewAsset.storage_url} />
+                    <ManifestPreview url={previewAsset.storage_url} expectedFrameCount={previewAsset.frame_count} />
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center overflow-auto bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:16px_16px] rounded border border-border p-4 w-full">

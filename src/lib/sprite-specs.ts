@@ -75,15 +75,15 @@ function makeSpec(
 }
 
 export const SPRITE_SPECS: Record<string, SpriteSpec> = {
-  // ── Units (spritesheet: frameCount × targetH per frame) ────────
-  unit_fighter:      makeSpec('unit',       'unit_fighter',      320, 32, 10, 32, 'Sprites/Units'),
-  unit_rogue:        makeSpec('unit',       'unit_rogue',        320, 32, 10, 32, 'Sprites/Units'),
-  unit_ranger:       makeSpec('unit',       'unit_ranger',       320, 32, 10, 32, 'Sprites/Units'),
-  unit_mage:         makeSpec('unit',       'unit_mage',         320, 32, 10, 32, 'Sprites/Units'),
-  unit_cleric:       makeSpec('unit',       'unit_cleric',       320, 32, 10, 32, 'Sprites/Units'),
-  unit_warden:       makeSpec('unit',       'unit_warden',       320, 32, 10, 32, 'Sprites/Units'),
-  unit_enemy_basic:  makeSpec('unit',       'unit_enemy_basic',  320, 32, 10, 32, 'Sprites/Units'),
-  unit_enemy_boss:   makeSpec('unit',       'unit_enemy_boss',   480, 48, 10, 32, 'Sprites/Units'),
+  // ── Units (per-frame: 128×128 cells, 10 frames) ─────────────────
+  unit_fighter:      makeSpec('unit',       'unit_fighter',      1280, 128, 10, 32, 'Sprites/Units'),
+  unit_rogue:        makeSpec('unit',       'unit_rogue',        1280, 128, 10, 32, 'Sprites/Units'),
+  unit_ranger:       makeSpec('unit',       'unit_ranger',       1280, 128, 10, 32, 'Sprites/Units'),
+  unit_mage:         makeSpec('unit',       'unit_mage',         1280, 128, 10, 32, 'Sprites/Units'),
+  unit_cleric:       makeSpec('unit',       'unit_cleric',       1280, 128, 10, 32, 'Sprites/Units'),
+  unit_warden:       makeSpec('unit',       'unit_warden',       1280, 128, 10, 32, 'Sprites/Units'),
+  unit_enemy_basic:  makeSpec('unit',       'unit_enemy_basic',  1280, 128, 10, 32, 'Sprites/Units'),
+  unit_enemy_boss:   makeSpec('unit',       'unit_enemy_boss',   1280, 128, 10, 32, 'Sprites/Units'),
 
   // ── Portraits (single frame) ───────────────────────────────────
   portrait_fighter:  makeSpec('portrait',   'portrait_fighter',  48,  64, 1, 32, 'Sprites/Portraits'),

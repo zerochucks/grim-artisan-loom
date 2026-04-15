@@ -499,6 +499,51 @@ serve(async (req) => {
             frameUrls.push(urlData.publicUrl);
           }
 
+          // ─── Frame-count validation & retry ───────────────────
+          const missingFrames = [];
+          for (let i = 0; i < frameActions.length; i++) {
+            if (!frameUrls[i]) missingFrames.push(i);
+          }
+          if (missingFrames.length > 0) {
+            console.log(`[batch] ${asset_key}: ${missingFrames.length} missing frames, retrying...`);
+            for (const mi of missingFrames) {
+              for (let retry = 0; retry < 2; retry++) {
+                try {
+                  await new Promise(r => setTimeout(r, 2000));
+                  const action = frameActions[mi];
+                  const prompt = buildSingleFramePrompt(spec, action, mi, frameCount, referenceNote);
+                  console.log(`[batch] Retry ${retry + 1}/2 for frame ${mi} (${action.name})`);
+                  const result = await generateSingleImage(
+                    LOVABLE_API_KEY!,
+                    prompt,
+                    referenceImages,
+                    0.9,
+                  );
+                  const base64Data = result.image.includes(",") ? result.image.split(",")[1] : result.image;
+                  const mimeMatch = result.image.match(/^data:(image\/\w+);/);
+                  const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+                  const ext = mimeType === "image/jpeg" ? "jpg" : "png";
+                  const framePath = `${asset_key}/frame_${mi}_${action.name}-${versionTag}_retry${retry}.${ext}`;
+                  const binaryStr = atob(base64Data);
+                  const bytes = new Uint8Array(binaryStr.length);
+                  for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+                  await supabase.storage.from("pixel-assets").upload(framePath, bytes, { contentType: mimeType, upsert: false });
+                  const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(framePath);
+                  frameUrls[mi] = urlData.publicUrl;
+                  break;
+                } catch (retryErr) {
+                  console.error(`[batch] Retry ${retry + 1} failed for frame ${mi}:`, retryErr);
+                }
+              }
+            }
+          }
+
+          // Final check: abort if still missing frames
+          const stillMissing = frameUrls.filter(u => !u).length;
+          if (stillMissing > 0) {
+            throw new Error(`${stillMissing} frames still missing after retries`);
+          }
+
           // Build manifest
           const manifest = {
             asset_key,
