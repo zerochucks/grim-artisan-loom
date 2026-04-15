@@ -1067,30 +1067,40 @@ const BatchQueuePage = () => {
                   </td>
                   <td className="px-3 py-2">
                     {asset.storage_url ? (
-                      <div className="flex items-center gap-1.5">
-                        <img
-                          src={asset.storage_url}
-                          alt={asset.asset_key}
-                          className="h-8 border border-border bg-card cursor-pointer hover:ring-1 hover:ring-primary transition-all"
-                          style={{ imageRendering: 'pixelated' }}
+                      isManifestUrl(asset.storage_url) ? (
+                        <div
+                          className="cursor-pointer hover:ring-1 hover:ring-primary transition-all"
                           onClick={() => setPreviewAsset(asset)}
-                          title="Click to enlarge"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
-                          title="Download"
-                          onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = asset.storage_url!;
-                            a.download = `${asset.asset_key}.png`;
-                            a.click();
-                          }}
+                          title="Click to preview frames"
                         >
-                          ⬇
-                        </Button>
-                      </div>
+                          <ManifestPreview url={asset.storage_url} compact />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <img
+                            src={asset.storage_url}
+                            alt={asset.asset_key}
+                            className="h-8 border border-border bg-card cursor-pointer hover:ring-1 hover:ring-primary transition-all"
+                            style={{ imageRendering: 'pixelated' }}
+                            onClick={() => setPreviewAsset(asset)}
+                            title="Click to enlarge"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
+                            title="Download"
+                            onClick={() => {
+                              const a = document.createElement('a');
+                              a.href = asset.storage_url!;
+                              a.download = `${asset.asset_key}.png`;
+                              a.click();
+                            }}
+                          >
+                            ⬇
+                          </Button>
+                        </div>
+                      )
                     ) : (
                       <span className="text-muted-foreground text-[9px]">—</span>
                     )}
