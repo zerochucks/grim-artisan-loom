@@ -426,14 +426,15 @@ serve(async (req) => {
     const frameCount = spec.frame_count as number;
     const isAnimated = frameCount > 1 && (spec.tier === "unit" || spec.tier === "vfx");
 
-    // ─── ANIMATED ASSETS: per-frame generation ───────────────────
+    // ─── ANIMATED ASSETS: per-frame generation (background) ─────
     if (isAnimated) {
-      let frameActions: { name: string; group: string; description: string }[];
+      // Mark as generating immediately
+      await supabase.from("sprite_assets").update({ qa_status: "generating", user_id: user.id }).eq("asset_key", asset_key);
 
+      let frameActions: { name: string; group: string; description: string }[];
       if (spec.tier === "unit") {
         frameActions = frameCount === 10 ? UNIT_FRAME_ACTIONS :
                        frameCount === 5  ? UNIT_FRAME_ACTIONS_5 :
-                       // Fallback: distribute generic poses
                        Array.from({ length: frameCount }, (_, i) => ({
                          name: `frame_${i}`,
                          group: i < Math.ceil(frameCount * 0.4) ? "idle" : i < Math.ceil(frameCount * 0.7) ? "attack" : "death",
@@ -443,145 +444,126 @@ serve(async (req) => {
         frameActions = getVfxFrameActions(frameCount, asset_key);
       }
 
-      console.log(`[batch] Generating ${asset_key} (${spec.tier}) as ${frameCount} individual frames`);
+      console.log(`[batch] Generating ${asset_key} (${spec.tier}) as ${frameCount} individual frames (background)`);
 
-      const versionTag = Date.now();
-      const frameUrls: string[] = [];
-      let totalRetries = 0;
-
-      for (let i = 0; i < frameActions.length; i++) {
-        const action = frameActions[i];
-        const prompt = buildSingleFramePrompt(spec, action, i, frameCount, referenceNote);
-
-        // Add variation instructions for re-generation
-        let finalPrompt = prompt;
-        if (isRegeneration) {
-          const variationSeed = (versionTag + i) % 1000000;
-          const strengthLabel = variationPct <= 25 ? "SUBTLE TWEAK" : variationPct <= 60 ? "MODERATE VARIATION" : "COMPLETELY NEW INTERPRETATION";
-          finalPrompt += `\n\n═══ VARIATION (${strengthLabel}) ═══\nRe-generation (strength: ${variationPct}%). Variation seed: ${variationSeed}`;
-        }
-
-        // Add delay between frames to avoid rate limiting
-        if (i > 0) {
-          await new Promise(r => setTimeout(r, 1500));
-        }
-
-        console.log(`[batch] Frame ${i + 1}/${frameCount}: ${action.name} (${action.group})`);
-
+      // Process all frames in the background so the request doesn't time out
+      const backgroundWork = (async () => {
         try {
-          const result = await generateSingleImage(
-            LOVABLE_API_KEY,
-            finalPrompt,
-            referenceImages,
-            isRegeneration ? 0.7 + (variationPct / 100) * 0.8 : 0.9,
-          );
-          totalRetries += result.retries;
+          const versionTag = Date.now();
+          const frameUrls: string[] = [];
+          let totalRetries = 0;
 
-          // Upload individual frame
-          const base64Data = result.image.includes(",") ? result.image.split(",")[1] : result.image;
-          const mimeMatch = result.image.match(/^data:(image\/\w+);/);
-          const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
-          const ext = mimeType === "image/jpeg" ? "jpg" : "png";
-          const framePath = `${asset_key}/frame_${i}_${action.name}-${versionTag}.${ext}`;
+          for (let i = 0; i < frameActions.length; i++) {
+            const action = frameActions[i];
+            const prompt = buildSingleFramePrompt(spec, action, i, frameCount, referenceNote);
 
-          const binaryStr = atob(base64Data);
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+            let finalPrompt = prompt;
+            if (isRegeneration) {
+              const variationSeed = (versionTag + i) % 1000000;
+              const strengthLabel = variationPct <= 25 ? "SUBTLE TWEAK" : variationPct <= 60 ? "MODERATE VARIATION" : "COMPLETELY NEW INTERPRETATION";
+              finalPrompt += `\n\n═══ VARIATION (${strengthLabel}) ═══\nRe-generation (strength: ${variationPct}%). Variation seed: ${variationSeed}`;
+            }
 
-          const { error: uploadErr } = await supabase.storage
+            if (i > 0) await new Promise(r => setTimeout(r, 1500));
+
+            console.log(`[batch] Frame ${i + 1}/${frameCount}: ${action.name} (${action.group})`);
+
+            const result = await generateSingleImage(
+              LOVABLE_API_KEY!,
+              finalPrompt,
+              referenceImages,
+              isRegeneration ? 0.7 + (variationPct / 100) * 0.8 : 0.9,
+            );
+            totalRetries += result.retries;
+
+            const base64Data = result.image.includes(",") ? result.image.split(",")[1] : result.image;
+            const mimeMatch = result.image.match(/^data:(image\/\w+);/);
+            const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+            const ext = mimeType === "image/jpeg" ? "jpg" : "png";
+            const framePath = `${asset_key}/frame_${i}_${action.name}-${versionTag}.${ext}`;
+
+            const binaryStr = atob(base64Data);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
+
+            const { error: uploadErr } = await supabase.storage
+              .from("pixel-assets")
+              .upload(framePath, bytes, { contentType: mimeType, upsert: false });
+
+            if (uploadErr) {
+              console.error(`[batch] Frame ${i} upload error:`, uploadErr);
+              throw new Error(`Failed to upload frame ${i}`);
+            }
+
+            const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(framePath);
+            frameUrls.push(urlData.publicUrl);
+          }
+
+          // Build manifest
+          const manifest = {
+            asset_key,
+            tier: spec.tier,
+            frame_count: frameCount,
+            cell_w: Math.round((spec.target_w as number) / frameCount),
+            cell_h: spec.target_h as number,
+            strip_w: spec.target_w as number,
+            strip_h: spec.target_h as number,
+            frames: frameActions.map((action, i) => ({
+              index: i,
+              name: action.name,
+              group: action.group,
+              url: frameUrls[i],
+            })),
+            clips: spec.tier === "unit"
+              ? frameCount === 10
+                ? [
+                    { name: "idle", frames: [0, 1, 2, 3], fps: 5, loop: true },
+                    { name: "attack", frames: [4, 5, 6], fps: 10, loop: false },
+                    { name: "death", frames: [7, 8, 9], fps: 6, loop: false },
+                  ]
+                : frameCount === 5
+                ? [
+                    { name: "idle", frames: [0, 1], fps: 5, loop: true },
+                    { name: "attack", frames: [2, 3], fps: 10, loop: false },
+                    { name: "death", frames: [4], fps: 6, loop: false },
+                  ]
+                : [{ name: "play", frames: [...Array(frameCount).keys()], fps: 6, loop: true }]
+              : [{ name: "play", frames: [...Array(frameCount).keys()], fps: 8, loop: /lightning|ambient|fog|glow|lava/.test(asset_key) }],
+            generated: new Date().toISOString(),
+          };
+
+          const manifestPath = `${asset_key}/manifest-${versionTag}.json`;
+          const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest, null, 2));
+          await supabase.storage
             .from("pixel-assets")
-            .upload(framePath, bytes, { contentType: mimeType, upsert: false });
+            .upload(manifestPath, manifestBytes, { contentType: "application/json", upsert: false });
+          const { data: manifestUrlData } = supabase.storage.from("pixel-assets").getPublicUrl(manifestPath);
 
-          if (uploadErr) {
-            console.error(`[batch] Frame ${i} upload error:`, uploadErr);
-            throw new Error(`Failed to upload frame ${i}`);
-          }
+          await supabase.from("sprite_assets").update({
+            storage_url: manifestUrlData.publicUrl,
+            qa_status: "generated",
+            user_id: user.id,
+          }).eq("asset_key", asset_key);
 
-          const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(framePath);
-          frameUrls.push(urlData.publicUrl);
-
-        } catch (e: any) {
-          if (e.message === "RATE_LIMITED") {
-            return new Response(JSON.stringify({
-              error: `Rate limited at frame ${i + 1}/${frameCount}. Completed frames saved.`,
-              retryable: true,
-              completed_frames: frameUrls.length,
-              frame_urls: frameUrls,
-            }), {
-              status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          throw e;
+          console.log(`[batch] ✅ ${asset_key} complete: ${frameCount} frames, ${totalRetries} retries`);
+        } catch (err: any) {
+          console.error(`[batch] ❌ ${asset_key} background error:`, err);
+          await supabase.from("sprite_assets").update({
+            qa_status: "rejected",
+          }).eq("asset_key", asset_key);
         }
-      }
+      })();
 
-      // Build a frame manifest JSON and store it alongside the frames
-      const manifest = {
-        asset_key,
-        tier: spec.tier,
-        frame_count: frameCount,
-        cell_w: Math.round((spec.target_w as number) / frameCount),
-        cell_h: spec.target_h as number,
-        strip_w: spec.target_w as number,
-        strip_h: spec.target_h as number,
-        frames: frameActions.map((action, i) => ({
-          index: i,
-          name: action.name,
-          group: action.group,
-          url: frameUrls[i],
-        })),
-        clips: spec.tier === "unit"
-          ? frameCount === 10
-            ? [
-                { name: "idle", frames: [0, 1, 2, 3], fps: 5, loop: true },
-                { name: "attack", frames: [4, 5, 6], fps: 10, loop: false },
-                { name: "death", frames: [7, 8, 9], fps: 6, loop: false },
-              ]
-            : frameCount === 5
-            ? [
-                { name: "idle", frames: [0, 1], fps: 5, loop: true },
-                { name: "attack", frames: [2, 3], fps: 10, loop: false },
-                { name: "death", frames: [4], fps: 6, loop: false },
-              ]
-            : [{ name: "play", frames: [...Array(frameCount).keys()], fps: 6, loop: true }]
-          : [{ name: "play", frames: [...Array(frameCount).keys()], fps: 8, loop: /lightning|ambient|fog|glow|lava/.test(asset_key) }],
-        generated: new Date().toISOString(),
-      };
-
-      // Upload manifest JSON
-      const manifestPath = `${asset_key}/manifest-${versionTag}.json`;
-      const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest, null, 2));
-      await supabase.storage
-        .from("pixel-assets")
-        .upload(manifestPath, manifestBytes, { contentType: "application/json", upsert: false });
-      const { data: manifestUrlData } = supabase.storage.from("pixel-assets").getPublicUrl(manifestPath);
-
-      // Update the sprite_asset row — storage_url points to the manifest
-      const { error: updateErr } = await supabase
-        .from("sprite_assets")
-        .update({
-          storage_url: manifestUrlData.publicUrl,
-          qa_status: "generated",
-          user_id: user.id,
-        })
-        .eq("asset_key", asset_key);
-
-      if (updateErr) {
-        console.error("DB update error:", updateErr);
-        throw new Error("Failed to save generated asset");
-      }
+      // Keep the worker alive until all frames are done
+      (globalThis as any).EdgeRuntime?.waitUntil?.(backgroundWork);
 
       return new Response(JSON.stringify({
         success: true,
         asset_key,
-        tier: spec.tier,
-        pipeline: "pixel",
-        mode: "per_frame",
-        frame_count: frameCount,
-        frame_urls: frameUrls,
-        manifest_url: manifestUrlData.publicUrl,
-        retries: totalRetries,
+        mode: "per_frame_async",
+        message: `Generating ${frameCount} frames in background. Poll qa_status for completion.`,
       }), {
+        status: 202,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
