@@ -65,10 +65,11 @@ function isManifestUrl(url: string | null): boolean {
   return url.endsWith('.json') || url.includes('manifest');
 }
 
-function ManifestPreview({ url, compact = false }: { url: string; compact?: boolean }) {
+function ManifestPreview({ url, compact = false, expectedFrameCount }: { url: string; compact?: boolean; expectedFrameCount?: number }) {
   const [manifest, setManifest] = useState<FrameManifest | null>(null);
   const [error, setError] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [frameDims, setFrameDims] = useState<Record<number, { w: number; h: number }>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +80,16 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
     return () => { cancelled = true; };
   }, [url]);
 
+  // Load image dimensions for each frame
+  useEffect(() => {
+    if (!manifest) return;
+    manifest.frames.forEach(f => {
+      const img = new Image();
+      img.onload = () => setFrameDims(prev => ({ ...prev, [f.index]: { w: img.naturalWidth, h: img.naturalHeight } }));
+      img.src = f.url;
+    });
+  }, [manifest]);
+
   if (error) return <span className="text-[9px] text-destructive">manifest error</span>;
   if (!manifest) return <span className="text-[9px] text-muted-foreground animate-pulse">loading frames…</span>;
 
@@ -87,9 +98,14 @@ function ManifestPreview({ url, compact = false }: { url: string; compact?: bool
     ? manifest.frames.filter(f => f.group === selectedGroup)
     : manifest.frames;
 
+  const frameCountMismatch = expectedFrameCount && manifest.frames.length !== expectedFrameCount;
+
   if (compact) {
     return (
       <div className="flex items-center gap-1">
+        {frameCountMismatch && (
+          <span className="text-[8px] text-amber-400 font-display" title={`Expected ${expectedFrameCount} frames, got ${manifest.frames.length}`}>⚠️</span>
+        )}
         {manifest.frames.slice(0, 4).map(f => (
           <img
             key={f.index}
