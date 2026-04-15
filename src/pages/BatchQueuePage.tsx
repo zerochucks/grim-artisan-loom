@@ -1231,14 +1231,20 @@ const BatchQueuePage = () => {
                 </div>
               </div>
               {previewAsset.storage_url && (
-                <div className="flex-1 flex items-center justify-center overflow-auto bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:16px_16px] rounded border border-border p-4 w-full">
-                  <img
-                    src={previewAsset.storage_url}
-                    alt={previewAsset.asset_key}
-                    className="max-w-full max-h-[50vh] object-contain"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </div>
+                isManifestUrl(previewAsset.storage_url) ? (
+                  <div className="w-full">
+                    <ManifestPreview url={previewAsset.storage_url} />
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center overflow-auto bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:16px_16px] rounded border border-border p-4 w-full">
+                    <img
+                      src={previewAsset.storage_url}
+                      alt={previewAsset.asset_key}
+                      className="max-w-full max-h-[50vh] object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  </div>
+                )
               )}
               {previewAsset.prompt_template && (
                 <p className="text-[10px] text-muted-foreground font-body w-full">{previewAsset.prompt_template}</p>
