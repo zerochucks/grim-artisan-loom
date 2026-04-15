@@ -1,5 +1,36 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import UPNG from "https://esm.sh/upng-js@2.1.0";
+
+// ─── BACKGROUND STRIP: replace #0C0C14 pixels with transparent alpha ──
+const BG_R = 0x0C, BG_G = 0x0C, BG_B = 0x14;
+const BG_TOLERANCE = 12; // Euclidean distance threshold
+
+function stripBackground(pngBytes: Uint8Array): Uint8Array {
+  try {
+    const decoded = UPNG.decode(pngBytes.buffer);
+    const rgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const w = decoded.width, h = decoded.height;
+    let stripped = 0;
+    for (let i = 0; i < rgba.length; i += 4) {
+      const dr = rgba[i] - BG_R;
+      const dg = rgba[i + 1] - BG_G;
+      const db = rgba[i + 2] - BG_B;
+      const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+      if (dist <= BG_TOLERANCE && rgba[i + 3] > 0) {
+        rgba[i + 3] = 0; // set alpha to 0
+        stripped++;
+      }
+    }
+    if (stripped === 0) return pngBytes; // no change needed
+    console.log(`[bg-strip] Removed ${stripped}/${w * h} pixels (${((stripped / (w * h)) * 100).toFixed(1)}%)`);
+    const reEncoded = UPNG.encode([rgba.buffer], w, h, 0); // 0 = lossless
+    return new Uint8Array(reEncoded);
+  } catch (err) {
+    console.error("[bg-strip] Failed, returning original:", err);
+    return pngBytes;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
