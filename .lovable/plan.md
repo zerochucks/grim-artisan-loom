@@ -1,43 +1,24 @@
 
+The user wants design spec documents (not a UI feature in the React app) — wireframes + component trees + anchor tables + data binding + interaction specs + responsive rules — for 6 Unity screens, prioritized 1→6. This is a documentation/artifact task, not app development.
 
-# Fix: Per-Frame Pipeline Output Still Producing Monolithic Sheets
+Format: one Markdown doc per screen, with an embedded wireframe. Wireframes will be PNG images (dark theme matching the palette) generated programmatically so dimensions are exact. Bundle everything into a downloadable ZIP plus individual files in `/mnt/documents/`.
 
-## What's Wrong
+Approach:
+- Generate wireframes with Python + Pillow at 1920×1080 reference, using the canonical palette. Pure rectangles + monospace labels — matches the "ledger / institutional" aesthetic.
+- Write 6 markdown spec docs following the exact template the user specified (Summary → Wireframe → Component Tree → Anchor Spec Table → Data Binding Table → Interaction Spec → Responsive Rules).
+- Enforce the layout rules: anchor-to-edge clusters for footers, full-width-relative offsets, no center+large-offset anchors, 4px grid, 44px min touch targets, ContentSizeFitter only on scroll Content containers.
+- Pull data field names from the existing codebase (`class-system.ts`, `sprite_assets`, `assets`, palette tables) so bindings are realistic, not invented.
 
-The uploaded `unit_artilleryengineer.png` proves the generation is **still producing a single multi-row spritesheet** instead of 10 individual frame PNGs. The metadata shows `320×32` (a leftover stub) and the background is solid `#0C0C14`.
+Deliverables in `/mnt/documents/rift-divers-ui-specs/`:
+1. `01-guild-hall.md` + `01-guild-hall-wireframe.png`
+2. `02-ledger.md` + `02-ledger-wireframe.png`
+3. `03-world-map.md` + `03-world-map-wireframe.png`
+4. `04-merc-sheet.md` + `04-merc-sheet-wireframe.png`
+5. `05-guild-base.md` + `05-guild-base-wireframe.png`
+6. `06-combat-hud.md` + `06-combat-hud-wireframe.png`
+7. `00-shared-tokens.md` — palette hexes, type scale, spacing grid, anchor patterns, ContentSizeFitter rules (referenced by all 6 docs to keep them DRY)
+8. `rift-divers-ui-specs.zip` — full bundle
 
-This means either:
-1. This asset was generated **before** the per-frame edge function was deployed, OR
-2. The `frame_count` or `tier` didn't match the animated path (`isAnimated` check on line 427 requires `frame_count > 1 AND tier in [unit, vfx]`)
+QA: render each wireframe → view as image → check no clipping, all regions labeled, palette correct → fix → re-render.
 
-## Root Causes to Fix
-
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Monolithic sheet output | Asset may have been generated before deploy, or fell through to the non-animated path | Reset and regenerate after confirming deploy is live |
-| `320×32` in metadata | `sprite_specs.ts` has wrong `targetW/targetH` for this asset, or the export uses spec values instead of actual dimensions | Fix the spec entry for `unit_artilleryengineer` and audit all unit specs |
-| Solid `#0C0C14` background | The non-animated prompt path still had solid background language for units (now fixed in per-frame path) | Already fixed in per-frame prompts; regeneration will resolve |
-| 9 frames instead of 10 | AI sometimes drops the last frame | Add a retry/validation step that checks frame count before finalizing manifest |
-
-## Plan
-
-### 1. Verify edge function deployment is current
-- Check edge function logs to confirm the per-frame path was actually used for this asset (look for `"per_frame_async"` log lines)
-
-### 2. Add frame-count validation in `batch-generate/index.ts`
-- After generating all frames, verify `frameUrls.length === frameCount`
-- If a frame failed or is missing, retry that specific frame (up to 2 retries)
-- Only write the manifest if all frames are present
-
-### 3. Fix sprite spec dimensions
-- Audit `sprite_specs.ts` entries for all 10-frame units to ensure `targetW` and `targetH` are correct (should be `128×128` per cell, not `320×32`)
-- The export metadata pulls from these specs, so fixing the source fixes the metadata
-
-### 4. Reset and regenerate
-- Reset `unit_artilleryengineer` (and any other units still showing old monolithic output) to `pending`
-- Regenerate using the deployed per-frame pipeline
-
-### 5. Post-generation QA enhancement in `BatchQueuePage.tsx`
-- When previewing a manifest asset, show a warning badge if `frame_count` in manifest doesn't match expected `frame_count` from the spec
-- Show image dimensions next to each frame thumbnail so you can spot wrong sizes immediately
-
+No code changes to the React app. Pure artifact generation via `code--exec` (Python/Pillow for wireframes, file writes for markdown, zip for bundle).
