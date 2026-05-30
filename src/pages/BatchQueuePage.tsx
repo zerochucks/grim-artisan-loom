@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -228,7 +228,10 @@ const BatchQueuePage = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
+  const [previewKey, setPreviewKey] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('preview');
+  });
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [variationStrength, setVariationStrength] = useState(50);
@@ -272,6 +275,47 @@ const BatchQueuePage = () => {
   }, [filterTier, filterStatus, filterCategory]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
+
+  // Live-derive the preview asset from current assets list so status / image
+  // updates flow into the open dialog instead of showing a stale snapshot.
+  const previewAsset = useMemo(
+    () => (previewKey ? assets.find(a => a.asset_key === previewKey) ?? null : null),
+    [previewKey, assets],
+  );
+
+  // Keep ?preview=<key> in the URL so a reload restores the dialog.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (previewKey) url.searchParams.set('preview', previewKey);
+    else url.searchParams.delete('preview');
+    window.history.replaceState({}, '', url.toString());
+  }, [previewKey]);
+
+  // Step to the previous / next asset currently loaded in the table.
+  const stepPreview = useCallback((dir: 1 | -1) => {
+    setPreviewKey(curr => {
+      if (!curr || assets.length === 0) return curr;
+      const idx = assets.findIndex(a => a.asset_key === curr);
+      if (idx === -1) return curr;
+      const next = assets[(idx + dir + assets.length) % assets.length];
+      return next.asset_key;
+    });
+  }, [assets]);
+
+  // Arrow-key navigation inside the preview dialog. Escape closes (Radix default).
+  useEffect(() => {
+    if (!previewKey) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inEditor = target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (inEditor) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); stepPreview(1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); stepPreview(-1); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewKey, stepPreview]);
 
   const toggleSelect = (key: string) => {
     setSelected(prev => {
@@ -1120,7 +1164,7 @@ const BatchQueuePage = () => {
                       isManifestUrl(asset.storage_url) ? (
                         <div
                           className="cursor-pointer hover:ring-1 hover:ring-primary transition-all"
-                          onClick={() => setPreviewAsset(asset)}
+                          onClick={() => setPreviewKey(asset.asset_key)}
                           title="Click to preview frames"
                         >
                           <ManifestPreview url={asset.storage_url} compact expectedFrameCount={asset.frame_count} />
@@ -1132,7 +1176,7 @@ const BatchQueuePage = () => {
                             alt={asset.asset_key}
                             className="h-8 border border-border bg-card cursor-pointer hover:ring-1 hover:ring-primary transition-all"
                             style={{ imageRendering: 'pixelated' }}
-                            onClick={() => setPreviewAsset(asset)}
+                            onClick={() => setPreviewKey(asset.asset_key)}
                             title="Click to enlarge"
                           />
                           <Button
@@ -1243,10 +1287,10 @@ const BatchQueuePage = () => {
       </div>
 
       {/* Preview Modal */}
-      <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewAsset(null)}>
+      <Dialog open={!!previewAsset} onOpenChange={(open) => !open && setPreviewKey(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col items-center gap-4 bg-card border-border p-6 overflow-y-auto">
           <DialogTitle className="sr-only">Asset Preview</DialogTitle>
-          <DialogDescription className="sr-only">Preview and QA the selected asset</DialogDescription>
+          <DialogDescription className="sr-only">Preview and QA the selected asset. Use the left and right arrow keys to step between assets.</DialogDescription>
           {previewAsset && (
             <>
               <div className="flex items-center justify-between w-full">
@@ -1254,9 +1298,31 @@ const BatchQueuePage = () => {
                   <h2 className="font-display text-sm tracking-widest text-primary">{previewAsset.asset_key}</h2>
                   <p className="text-[10px] text-muted-foreground font-body">
                     {previewAsset.tier} · {previewAsset.target_w}×{previewAsset.target_h} · {previewAsset.frame_count > 1 ? `${previewAsset.frame_count} frames` : 'static'}
+                    {(() => {
+                      const idx = assets.findIndex(a => a.asset_key === previewAsset.asset_key);
+                      return idx >= 0 ? ` · ${idx + 1} / ${assets.length}` : '';
+                    })()}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-[12px]"
+                    title="Previous asset (←)"
+                    onClick={() => stepPreview(-1)}
+                  >
+                    ◀
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-[12px]"
+                    title="Next asset (→)"
+                    onClick={() => stepPreview(1)}
+                  >
+                    ▶
+                  </Button>
                   <Badge variant="outline" className={`text-[9px] font-display tracking-wider ${STATUS_COLORS[previewAsset.qa_status] || ''}`}>
                     {previewAsset.qa_status.toUpperCase()}
                   </Badge>
@@ -1264,13 +1330,14 @@ const BatchQueuePage = () => {
                     variant="outline"
                     size="sm"
                     className="text-[10px] font-display tracking-wider"
+                    disabled={!previewAsset.storage_url}
                     onClick={() => downloadAssetAsBlob(previewAsset.storage_url!, `${previewAsset.asset_key}.png`)}
                   >
                     ⬇ DOWNLOAD
                   </Button>
                 </div>
               </div>
-              {previewAsset.storage_url && (
+              {previewAsset.storage_url ? (
                 isManifestUrl(previewAsset.storage_url) ? (
                   <div className="w-full">
                     <ManifestPreview url={previewAsset.storage_url} expectedFrameCount={previewAsset.frame_count} />
@@ -1285,16 +1352,22 @@ const BatchQueuePage = () => {
                     />
                   </div>
                 )
+              ) : (
+                <div className="flex items-center justify-center w-full h-32 border border-dashed border-border text-[10px] text-muted-foreground font-body">
+                  No image yet — {previewAsset.qa_status === 'generating' ? 'generating…' : 'queue or generate this asset.'}
+                </div>
               )}
               {previewAsset.prompt_template && (
                 <p className="text-[10px] text-muted-foreground font-body w-full">{previewAsset.prompt_template}</p>
               )}
-              <div className="flex items-center gap-2 w-full justify-end">
+              <div className="flex items-center gap-2 w-full justify-between">
+                <span className="text-[9px] font-body text-muted-foreground">← / → to navigate</span>
+                <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   className="text-[10px] font-display tracking-wider"
-                  onClick={() => { openEditPrompt(previewAsset); setPreviewAsset(null); }}
+                  onClick={() => openEditPrompt(previewAsset)}
                 >
                   ✏️ EDIT PROMPT
                 </Button>
@@ -1303,7 +1376,7 @@ const BatchQueuePage = () => {
                     <Button
                       size="sm"
                       className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'approved'); setPreviewAsset(null); }}
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'approved'); stepPreview(1); }}
                     >
                       ✓ APPROVE
                     </Button>
@@ -1311,12 +1384,13 @@ const BatchQueuePage = () => {
                       variant="destructive"
                       size="sm"
                       className="text-[10px] font-display tracking-wider"
-                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); setPreviewAsset(null); }}
+                      onClick={() => { setQaStatus(previewAsset.asset_key, 'rejected'); stepPreview(1); }}
                     >
                       ✗ REJECT
                     </Button>
                   </>
                 )}
+                </div>
               </div>
             </>
           )}
