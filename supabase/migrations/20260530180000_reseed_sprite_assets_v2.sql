@@ -1,4 +1,4 @@
-export const SQL = `-- Re-seed sprite_assets catalog from pixel-forge-assets-OPTIMIZED_v2.xlsx (937 rows)
+-- Re-seed sprite_assets catalog from pixel-forge-assets-OPTIMIZED_v2.xlsx (937 rows)
 -- Idempotent: upserts metadata; clears storage_url/approved/qa_status for rows flagged regenerate='x'
 -- Drops keys no longer in the canonical catalog (duplicate relics)
 
@@ -454,10 +454,10 @@ Negative prompts: no background, no UI frame, no text, no watermark, no large gl
 
 Requirements (strict):
 
-- Dominant fill: warm cream \`#D4C9B0\` (most pixels)
-- Groove lines between spiral bands: \`#0C0C14\` (thin separators only, 1px where used)
-- Outer edge outline: \`#0C0C14\`, exactly 1px (no thick cream border)
-- Center: small dark dot \`#0C0C14\` as spiral terminus
+- Dominant fill: warm cream `#D4C9B0` (most pixels)
+- Groove lines between spiral bands: `#0C0C14` (thin separators only, 1px where used)
+- Outer edge outline: `#0C0C14`, exactly 1px (no thick cream border)
+- Center: small dark dot `#0C0C14` as spiral terminus
 - Hard pixel edges, no anti-aliasing, zero alpha bleed
 
 Spiral structure guidance:
@@ -489,7 +489,7 @@ Spiral structure guidance:
 **Style constraints (must match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: only 2–3 interior cuts to suggest tabard split, shoulder line, or the raised arm.
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -513,7 +513,7 @@ No face details, no readable text, no runes, no background, no UI frame, no grad
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: only a few interior cuts (cloak split, staff grip, vine loops).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -537,7 +537,7 @@ No face details, no antlers, no full-body tree/branches exploding outward, no re
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (helmet slit, arm separation, sword hilt, armor break).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -563,7 +563,7 @@ No face details, no readable text, no runes, no background, no UI frame, no grad
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette
+- **1px near-black outline** (`#0C0C14`) around the silhouette
 - Minimal internal detail: 2–4 interior cuts max to suggest segmented plates (no texture noise)
 - **Three clear contrast tiers** (highlight / mid / shadow), no dithering
 
@@ -587,7 +587,7 @@ No readable text, no runes, no background, no UI frame, no gradients, no waterma
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (robe split, staff grip, circle edge).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -610,7 +610,7 @@ No face details, no readable runes/text, no background, no UI frame, no gradient
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (cloak split, arm separation, bow curve, arrow line).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -633,7 +633,7 @@ No face details, no readable text, no runes, no background scenery, no UI frame,
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (hood opening, arm separation, dagger hilts/blades).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -657,7 +657,7 @@ No face details, no readable text, no runes, no background scenery, no UI frame,
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (cloak split, staff grip, totem head).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -681,7 +681,7 @@ No face details, no readable runes/text, no background scenery, no UI frame, no 
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (carapace segmentation line, arm separation, emitter head).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -705,7 +705,7 @@ No face details, no readable runes/text, no background scenery, no UI frame, no 
 **Style constraints (match the set):**
 
 - **Hard pixel edges**, **no anti-aliasing**, **no blur**, **zero alpha bleed**.
-- **1px near-black outline** (\`#0C0C14\`) around the silhouette.
+- **1px near-black outline** (`#0C0C14`) around the silhouette.
 - Minimal internal detail: 2–4 interior cuts max (arm separation, totem disc, cloak split).
 - **Three clear contrast tiers** (highlight / mid / shadow). No texture noise, no dithering.
 
@@ -721,7 +721,7 @@ No face details, no readable text, no runes, no background scenery, no UI frame,
 
 **Subject: ** “Compass Axis” symbol representing the two-allegiance / two-axis system (Crown ↔ Void). - Core shape: a **crosshair / axis cross** (vertical + horizontal) with a small **center dot**.
 - Tips: subtle **arrowhead nubs** on the four ends (1–2px each) to read “axis,” not “plus sign.”
-- Optional: a tiny **half-crown notch** on the top tip and a tiny **rift notch** on the bottom tip (abstract, 1–2px, not detailed) to hint Crown vs Void without becoming a full emblem. **Palette / style constraints (match your compass set):** - **** \`#0C0C14\`
+- Optional: a tiny **half-crown notch** on the top tip and a tiny **rift notch** on the bottom tip (abstract, 1–2px, not detailed) to hint Crown vs Void without becoming a full emblem. **Palette / style constraints (match your compass set):** - **** `#0C0C14`
 - **Three clear contrast tiers** (light / mid / shadow), desaturated grey base
 - , ****, **no blur**, **zero alpha bleed**
 - Minimal internal detail (no texture noise, no gradients) **Coloring suggestion (safe default):** - Mid grey fill for the axis arms
@@ -730,175 +730,175 @@ No face details, no readable text, no runes, no background scenery, no UI frame,
 - Keep any faction hint extremely subtle (no glow unless this icon is meant to glow) **Negative prompts:** No text, no watermark, no UI frame, no background, no decorative flourishes, no complex runes'),
 ('icon_corruption','misc','icon','Sprites/Icons/icon_corruption',16,16,1,16,'Point','#4A1FA8','Pixel art **status/affliction icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_corruption\`
+**Asset:** `icon_corruption`
 
 **Subject: ** “Corruption” mark — a small **void tear / jagged crack** with creeping corruption tendrils. - Core silhouette: **vertical rift crack** (1px-wide jagged line with 1–2 small forks).
 - Surround: 2–3 **thorny tendrils** curling outward (short, chunky hooks; keep minimal).
-- Center accent: tiny **void eye dot** or “ink blot” at the crack’s midpoint (1–2 pixels) to sell infection source. **Palette / style (match your compass set):** - Outline: **1px near-black** \`#0C0C14\`
-- Base: dark purple-black fill (very close to \`#0C0C14\`, but one step lighter so it reads)
+- Center accent: tiny **void eye dot** or “ink blot” at the crack’s midpoint (1–2 pixels) to sell infection source. **Palette / style (match your compass set):** - Outline: **1px near-black** `#0C0C14`
+- Base: dark purple-black fill (very close to `#0C0C14`, but one step lighter so it reads)
 - Accent: **electric violet** highlights on the crack edges (tight, stepped)
 - Optional warning tint: 1–2 pixels of **crimson** only if your corruption system uses a red-violet “danger” cue (keep extremely limited) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - **Three clear contrast tiers** (highlight / mid / shadow)
 - No texture noise, no gradients, no glow bloom (if you want glow, keep it 1px stepped, not soft) **Negative prompts:** No text, no watermark, no UI frame, no background, no complex runes/symbols, no particles everywhere'),
 ('icon_crown','misc','icon','Sprites/Icons/icon_crown',32,32,1,32,'Point','#D2AF32','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_crown\`
+**Asset:** `icon_crown`
 
 **Subject: ** Crown emblem (authority / Crown axis) — simple, stamp-like crown silhouette. - Core silhouette: a **3-point crown** (center point tallest), with a solid base band.
 - Keep the negative space clean: 2 small cut-ins between the points (no tiny filigree).
-- Optional: 1–2 tiny “jewel” dots on the band (1px each) only if it stays readable. **Palette / style (match your compass set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: 1–2 tiny “jewel” dots on the band (1px each) only if it stays readable. **Palette / style (match your compass set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated metallic gold/bronze tones with **three clear tiers** (highlight / mid / shadow) - Highlight: pale warm gold (top-left edges) - Mid: muted gold/ochre fill - Shadow: near-black / deep brown shadow (bottom-right edges)
 - ****, ****, **no blur**, **zero alpha bleed**
 - No texture noise, no gradients **Optional “authority” treatment (subtle):** - A tiny 1px stepped glow *only* on the top tips (very restrained), if your other icons glow; otherwise omit. **Negative prompts:** No text, no watermark, no UI frame, no background, no ornate jewelry detail, no complex heraldry'),
 ('icon_crown_favor','misc','icon','Sprites/Icons/icon_crown_favor',32,32,1,16,'Point',NULL,'Pixel art **status/affinity icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_crown_favor\`
+**Asset:** `icon_crown_favor`
 
 **Subject: ** “Crown Favor” — a Crown mark that reads as *blessed / endorsed*, not just “Crown.” - Core silhouette: **small 3-point crown** (center point tallest), solid base band.
 - Favor cue: **one laurel sprig** (or half-wreath) hugging the lower-left of the crown *or* a **single wax-seal ribbon tail** beneath the band (pick one; keep it minimal).
-- Optional: **1 small star/spark** (1–2px) above the crown tip to signal “favor” (only if it stays readable). **Palette / style (match your compass set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: **1 small star/spark** (1–2px) above the crown tip to signal “favor” (only if it stays readable). **Palette / style (match your compass set):** - Outline: **1px near-black** `#0C0C14`
 - Crown fill: muted gold/bronze with **three clear tiers** (highlight / mid / shadow), no gradients
 - Favor accent: slightly brighter gold highlight on the laurel/seal + a tiny pale highlight pixel on the crown tip
 - ****, ****, **no blur**, **zero alpha bleed**
-- No texture noise, no complex jewelry detail **Glow (very restrained):** - If favor needs to “pop” vs \`icon_crown\`, add a **1px stepped halo** in warm gold around the top half of the crown only (no soft bloom). Otherwise omit glow. **Negative prompts:** No text, no watermark, no UI frame, no background, no ornate heraldry, no readable symbols'),
+- No texture noise, no complex jewelry detail **Glow (very restrained):** - If favor needs to “pop” vs `icon_crown`, add a **1px stepped halo** in warm gold around the top half of the crown only (no soft bloom). Otherwise omit glow. **Negative prompts:** No text, no watermark, no UI frame, no background, no ornate heraldry, no readable symbols'),
 ('icon_crown_seal','misc','icon','Sprites/Special/icon_crown_seal',128,128,1,16,'Point',NULL,'Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_crown_seal\`
+**Asset:** `icon_crown_seal`
 
 **Subject: ** Crown seal (official mark / stamped approval) — reads like a **wax seal** tied to the Crown axis. - Core shape: **round seal disk** (simple circle) with a **tiny crown** embossed in the center (3-point crown, center point tallest).
 - Edge treatment: 3–5 small “stamp scallops” around the seal edge (chunky, evenly spaced) so it reads as a seal, not a coin.
-- Optional: **one short ribbon tail** at the bottom (2–3px long) if you need extra “seal” readability; keep minimal. **Palette / style (match your compass set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: **one short ribbon tail** at the bottom (2–3px long) if you need extra “seal” readability; keep minimal. **Palette / style (match your compass set):** - Outline: **1px near-black** `#0C0C14`
 - Seal fill: muted gold/bronze tones with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left arc - Mid: flat fill - Shadow: bottom-right arc
 - Crown emboss: either near-black cut-in or lighter highlight pixels (keep it readable, not detailed)
 - ****, ****, **no blur**, **zero alpha bleed**
-- No gradients, no texture noise **Optional “official” emphasis (subtle):** - If it needs to pop vs \`icon_crown\`, add a **1px stepped warm-gold halo** around the seal edge only (no soft bloom). Otherwise omit. **Negative prompts:** No text, no watermark, no UI frame, no background, no ornate heraldry, no readable symbols beyond the simple crown'),
+- No gradients, no texture noise **Optional “official” emphasis (subtle):** - If it needs to pop vs `icon_crown`, add a **1px stepped warm-gold halo** around the seal edge only (no soft bloom). Otherwise omit. **Negative prompts:** No text, no watermark, no UI frame, no background, no ornate heraldry, no readable symbols beyond the simple crown'),
 ('icon_district_office','misc','icon','Sprites/Icons/icon_district_office',32,32,1,16,'Point','#C8A870','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_district_office\`
+**Asset:** `icon_district_office`
 
 **Subject: ** “District Office” — a small bureaucratic building/registry symbol (admin hub). - Core silhouette: **simple façade** (tiny building block) with a centered **doorway** and 2 side “window” cuts (1px each).
 - Top marker: a small **capitol/registry pediment** shape (triangle/flat roof) *or* a tiny **stamp seal** circle above the door (pick one; keep it minimal).
-- Optional: 1 short **banner/placard** bar above the door to imply “office” (no text). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: 1 short **banner/placard** bar above the door to imply “office” (no text). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated greys with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left roof edge - Mid: main wall fill - Shadow: bottom-right + under roof lip
 - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise **Optional faction-neutral accent (very subtle):** - If you need it to feel “official,” add **1–2 pixels of muted gold** on the roof ridge *or* a tiny seal dot—keep it understated (not a rarity glow). **Negative prompts:** No text, no watermark, no UI frame, no background scenery, no complex signage, no readable symbols'),
 ('icon_gold','misc','icon','Sprites/Icons/icon_gold',16,16,1,16,'Point','#D2AF32','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_gold\`
+**Asset:** `icon_gold`
 
 **Subject: ** Gold currency icon — a single **coin** (or tight 2-coin stack) designed for max readability. - Core shape: **round coin** with a slightly thicker rim (reads “coin,” not “dot”).
 - Interior mark: 1 simple **stamp** (choose one): - a tiny **crown notch** (abstract, 2–3px), *or* - a simple **vertical slit** (like a mint mark)
-- Optional depth: a **second coin edge** peeking behind (2–3px) if your UI supports stacks (keep minimal). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional depth: a **second coin edge** peeking behind (2–3px) if your UI supports stacks (keep minimal). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: warm gold tones with **three clear tiers** (no gradients) - Highlight: pale gold on top-left rim - Mid: muted gold/ochre fill - Shadow: deep brown-gold on bottom-right rim
 - ****, ****, **no blur**, **zero alpha bleed**
 - No texture noise, no detailed engraving **Optional “value” pop (subtle):** - 1px specular sparkle at top-left (single pixel or 2-pixel cluster) *only if it stays clean*. **Negative prompts:** No text, no watermark, no UI frame, no background, no complex symbols'),
 ('icon_gold_sm','misc','icon','Sprites/Icons/icon_gold_sm',16,16,1,16,'Point',NULL,'Pixel art **icon**, **12x12** (small variant), transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_gold_sm\`
+**Asset:** `icon_gold_sm`
 
 **Subject: ** Small gold currency pip — **single coin** only (no stack) for legibility at tiny size. - Shape: clean **circle coin** with a 1px rim suggestion (don’t over-detail).
-- Interior mark: optional **single 1px mint dot** or tiny notch (only if it still reads; otherwise omit). **Palette / style (match \`icon_gold\` but simplified):** - Outline: **1px near-black** \`#0C0C14\`
+- Interior mark: optional **single 1px mint dot** or tiny notch (only if it still reads; otherwise omit). **Palette / style (match `icon_gold` but simplified):** - Outline: **1px near-black** `#0C0C14`
 - Fill: warm gold tones with **3 clear tiers** (no gradients) - Highlight: 1–2px on top-left rim - Mid: flat muted gold fill - Shadow: 1–2px on bottom-right rim (deep brown-gold)
 - ****, ****, **no blur**, **zero alpha bleed**
 - No texture noise, no engraving detail **Composition + constraints:** - Centered, with 1px padding where possible
 - No text, no watermark, no UI frame, no background'),
 ('icon_grand_registrar_sigil','misc','icon','Sprites/Special/icon_grand_registrar_sigil',256,256,1,16,'Point',NULL,'Pixel art **sigil icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_grand_registrar_sigil\`
+**Asset:** `icon_grand_registrar_sigil`
 
 **Subject: ** “Grand Registrar” official sigil — reads as **bureaucratic authority** (registry/audit), not a faction state. - Core shape: **round seal** (coin/wax-stamp silhouette) with a crisp edge.
 - Center mark: a **ledger glyph**: simple **open-book “V” shape** or **vertical spine + two page panels** (2–3 chunky shapes total).
 - Authority cue: a **tiny crown notch** *above* the book (1–2px) to imply “Registrar authority,” but keep it abstract.
-- Optional: 4 small tick marks at N/E/S/W on the seal edge (1px each) to suggest “official registry stamp.” **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: 4 small tick marks at N/E/S/W on the seal edge (1px each) to suggest “official registry stamp.” **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated greys with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left rim + 1px on the book edge - Mid: main seal fill - Shadow: bottom-right rim + under the crown notch
 - Accent (optional, very restrained): **muted gold** 1–2px on the crown notch *or* a single thin ring pixel on the seal rim (no glow bloom) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise, no micro-engraving **Negative prompts:** No text, no watermark, no UI frame, no background scenery, no detailed heraldry, no complex runes'),
 ('icon_heat','misc','icon','Sprites/Icons/icon_heat',16,16,1,16,'Point','#C04020','Pixel art **status/affliction icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_heat\`
+**Asset:** `icon_heat`
 
 **Subject: ** “Heat” (overheating / burn / aggro pressure) — a simple, high-contrast **heat glyph**. - Core silhouette: a single **flame droplet** shape (teardrop with 1 inner notch) *or* a **3-wavy-line heat shimmer** (pick one; flame is more readable at ).
-- Inner detail: 1 small inner cut (negative space) to imply the flame core (keep chunky, not detailed). **Palette / style (match your UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Inner detail: 1 small inner cut (negative space) to imply the flame core (keep chunky, not detailed). **Palette / style (match your UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: warm heat colors with **three clear tiers** (no gradients) - Highlight: pale yellow-orange (top-left) - Mid: orange - Shadow: deep red-brown / near-black (bottom-right)
 - Optional “danger pop”: **1–2 pixels of bright ember** at the tip only (controlled) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No texture noise, no dithering, no glow bloom (if you need glow, keep it 1px stepped) **Negative prompts:** No text, no watermark, no UI frame, no background, no smoke clouds, no complex sparks/particles'),
 ('icon_hunger','misc','icon','Sprites/Icons/icon_hunger',32,32,1,16,'Point',NULL,'Pixel art **status/affliction icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_hunger\`
+**Asset:** `icon_hunger`
 
 **Subject: ** “Hunger” — a simple deprivation/need symbol (reads instantly as empty/consumption). - Core silhouette: **empty bowl** (shallow U-shape) with a **single spoon** resting inside *or* a **bite-marked ration** (choose one; bowl is clearest at ).
-- Hunger cue: 2 short **“hollow” lines** above the bowl (like faint steam lines, but droopy) to suggest need/emptiness (keep minimal). **Palette / style (match your UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Hunger cue: 2 short **“hollow” lines** above the bowl (like faint steam lines, but droopy) to suggest need/emptiness (keep minimal). **Palette / style (match your UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated greys with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left rim of bowl/spoon - Mid: main fill - Shadow: bottom-right + inside of bowl (to sell “empty”)
 - Optional warning accent (only if your hunger UI uses it): **1–2 pixels** of muted amber on the rim (no glow bloom). **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise, no dithering
 - Keep internal detail minimal (don’t add food texture) **Negative prompts:** No text, no watermark, no UI frame, no background, no complex props (no full plate + fork + knife set)'),
 ('icon_insurance','misc','icon','Sprites/Icons/icon_insurance',32,32,1,16,'Point','#4488AA','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_insurance\`
+**Asset:** `icon_insurance`
 
 **Subject: ** “Insurance” — a protective/coverage symbol that reads instantly. - Core silhouette: **shield** (simple, chunky medieval badge shape), centered.
 - Insurance cue: a small **check mark** inside the shield (1-stroke, thick enough to read) *or* a tiny **seal dot** (pick one; check mark is clearest).
-- Optional: a **document corner** peeking behind the shield (2–3px rectangle) to imply “policy,” but only if it stays clean. **Palette / style (match your UI/compass set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: a **document corner** peeking behind the shield (2–3px rectangle) to imply “policy,” but only if it stays clean. **Palette / style (match your UI/compass set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated greys with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left edge of shield - Mid: main shield fill - Shadow: bottom-right edge + inside edge under the check
 - Accent (optional): 1–2px **muted gold** on the shield rim to signal “official coverage” (no glow bloom). If you want it purely neutral, omit accent. **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise, no micro-details **Negative prompts:** No text, no watermark, no UI frame, no background, no complex heraldry'),
 ('icon_insurance_payout','misc','icon','Sprites/Icons/icon_insurance_payout',16,16,1,16,'Point','#C09030','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_insurance_payout\`
+**Asset:** `icon_insurance_payout`
 
-**Subject: ** “Insurance payout” — coverage + money delivered (clear “approved payout” read). - Core silhouette: **shield** (same base shape as \`icon_insurance\`, centered).
+**Subject: ** “Insurance payout” — coverage + money delivered (clear “approved payout” read). - Core silhouette: **shield** (same base shape as `icon_insurance`, centered).
 - Payout cue: **coin** (small circle) at the lower-right edge of the shield *or* a tiny **downward arrow** landing into the coin (pick one; shield + coin is usually clearest).
-- Approval cue: a small **check mark** on the shield face (simple, thick stroke). **Palette / style (match your UI/compass set):** - Outline: **1px near-black** \`#0C0C14\`
+- Approval cue: a small **check mark** on the shield face (simple, thick stroke). **Palette / style (match your UI/compass set):** - Outline: **1px near-black** `#0C0C14`
 - Shield fill: desaturated greys with **three clear tiers** (highlight / mid / shadow)
 - Coin fill: warm gold with **three clear tiers** (highlight / mid / shadow), minimal detail (no engraving)
 - Optional accent: 1–2px muted green on the check mark (only if “payout/approved” needs a success color; otherwise keep it neutral) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise, no micro-details **Negative prompts:** No text, no watermark, no UI frame, no background, no complex symbols (no dollar signs, no numbers)'),
 ('icon_intel','misc','icon','Sprites/Icons/icon_intel',32,32,1,16,'Point','#20C0B0','Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_intel\`
+**Asset:** `icon_intel`
 
 **Subject: ** “Intel” — information / reconnaissance / discovered insight. - Core silhouette: **folded map** *or* **document page with an eye** (pick one; map reads “intel” fastest in games).
 - Recommended: **folded map** (3-panel zig-zag), with a single **location pin** dot (1px) or tiny **X mark** (2px) in the center panel.
-- Optional: a tiny **magnifier nub** (1–2px circle + handle) overlapping a corner *only if it stays clean at *. **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Optional: a tiny **magnifier nub** (1–2px circle + handle) overlapping a corner *only if it stays clean at *. **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: desaturated greys with **three clear tiers** (highlight / mid / shadow) - Highlight: top-left edges of the map folds - Mid: main panel fills - Shadow: bottom-right edges + fold creases
 - Accent (optional, subtle): 1–2px muted blue-teal on the pin/X to distinguish “intel” from generic “paper” (no glow bloom) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - No gradients, no texture noise, no micro-text **Negative prompts:** No readable text, no watermark, no UI frame, no background scenery, no complex diagrams'),
 ('icon_jade_rift_portal','misc','icon','Sprites/Special/icon_jade_rift_portal',256,256,1,16,'Point',NULL,'Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_jade_rift_portal\`
+**Asset:** `icon_jade_rift_portal`
 
 **Subject: ** Jade rift portal — a small **oval ring/tear** with a void center and controlled jade energy. - Core silhouette: **vertical oval portal ring** (like an eye/tear shape), centered.
 - Center: deep void fill (near-black) with a tiny inner “depth” notch (1–2px) so it doesn’t read flat.
 - Rift edge: jagged/uneven ring contour (2–3 small bite-outs max) to imply “rift,” not a perfect donut.
-- Portal cue: 2–4 tiny **orbiting shards/motes** around the ring (diamond pixels), sparse. **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
-- Void interior: \`#0C0C14\` (or one step lighter for readability if needed)
+- Portal cue: 2–4 tiny **orbiting shards/motes** around the ring (diamond pixels), sparse. **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
+- Void interior: `#0C0C14` (or one step lighter for readability if needed)
 - Jade accent: tight, stepped jade highlights on the ring edge only (no bloom/blur) - Jade core: deep jade-green - Highlight: lighter jade on top-left edge - Shadow: near-black on bottom-right edge
 - **Three clear contrast tiers**, no gradients, no texture noise **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
 - Keep glow extremely controlled: max **1px aura** on the jade edge, crisp steps only **Negative prompts:** No text, no watermark, no UI frame, no background scenery, no complex runes/symbols, no particle cloud'),
 ('icon_morale','misc','icon','Sprites/Icons/icon_morale',16,16,1,16,'Point','#D09030','Pixel art **status icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_morale\`
+**Asset:** `icon_morale`
 
 **Subject: ** “Morale” — a simple *uplift / rally* symbol (positive team spirit), not a faction mark. - Core silhouette: **banner pennant** (small flag on a short pole) *or* a **heart-with-shield** hybrid.
-- Recommended: **banner pennant** (reads fastest at ): - Short pole on the left - Triangular or swallowtail flag to the right - Optional: 1 small **spark/star** above the flag tip (1–2px) to signal “buff/boost” **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Recommended: **banner pennant** (reads fastest at ): - Short pole on the left - Triangular or swallowtail flag to the right - Optional: 1 small **spark/star** above the flag tip (1–2px) to signal “buff/boost” **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: **three clear tiers** (highlight / mid / shadow), no gradients
 - Color suggestion: - If morale is “positive”: muted **gold** or **warm amber** flag (not neon) - If you need it neutral: desaturated greys, with a tiny gold highlight pixel to separate from other paper/icons
 - ****, ****, **no blur**, **zero alpha bleed**
 - Minimal internal detail (no texture noise) **Negative prompts:** No text, no watermark, no UI frame, no background scenery, no complex heraldry, no detailed faces/emojis'),
 ('icon_provisions','misc','icon','Sprites/Icons/icon_provisions',32,32,1,16,'Point',NULL,'Pixel art **icon**, **16x16**, transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_provisions\`
+**Asset:** `icon_provisions`
 
 **Subject: ** “Provisions” — travel supplies / rations (neutral survival resource, not a status). - Core silhouette: **ration satchel** *or* **tied ration bundle** (pick one; bundle reads fastest at ).
 - Recommended: **tied ration bundle**: - Small rectangular pack with a single strap/band crossing it - Optional: 1 tiny buckle dot (1px) on the strap
-- Alternate (if your UI already uses bags): **satchel** with a flap + 1 strap (minimal). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** \`#0C0C14\`
+- Alternate (if your UI already uses bags): **satchel** with a flap + 1 strap (minimal). **Palette / style (match your compass/UI set):** - Outline: **1px near-black** `#0C0C14`
 - Fill: **three clear tiers** (highlight / mid / shadow), no gradients
 - Color suggestion: - Cloth/leather: muted brown/tan (desaturated) - Strap/shadow: darker brown/near-black - Highlight: 1–2px lighter tan on top-left edge
 - ****, ****, **no blur**, **zero alpha bleed**
 - Minimal internal detail (no texture noise) **Negative prompts:** No text, no watermark, no UI frame, no background scenery, no tiny food items (no bread/meat/berries), no complex stitching detail'),
 ('icon_provisions_sm','misc','icon','Sprites/Icons/icon_provisions_sm',16,16,1,16,'Point',NULL,'Pixel art **icon**, **12x12** (small variant), transparent background — compact, centered, instantly readable at 1x size.
 
-**Asset:** \`icon_provisions_sm\`
+**Asset:** `icon_provisions_sm`
 
 **Subject: ** Small provisions marker — simplified **ration bundle** (no bag/extra props) for tiny-size clarity. - Core silhouette: **small rectangle pack** with a single **strap band** across it (1px thick).
 - Optional: 1px **buckle dot** on the strap *only if it still reads* at (otherwise omit). **Palette / style (match your UI set):** - Outline: **) **Rendering constraints:** - ****, ****, **no blur**, **zero alpha bleed**
@@ -1132,15 +1132,15 @@ No face details, no readable text, no runes, no background scenery, no UI frame,
 ('icon_threat_void','threat','icon','Sprites/Icons/Threats/icon_threat_void',32,32,1,32,'Point',NULL,'Pixel art threat type icon representing Void damage. A dark swirling void eye or black hole with cyan-blue accretion ring, eldritch and unsettling. Transparent background, hard pixel edges. 32x32 pixels.'),
 ('hud_active_turn_ring','ui','icon','Sprites/UI/HUD/hud_active_turn_ring',48,48,1,16,'Point',NULL,'Glowing ring to indicate current actor'),
 ('hud_ap_pip','ui','icon','Sprites/UI/hud_ap_pip',12,12,1,16,'Point','#D2AF32','pixel art HUD action point pip, small filled circle, bright gold, single AP unit indicator, transparent background'),
-('hud_ap_pip_empty','ui','icon','Sprites/UI/HUD/hud_ap_pip_empty',16,16,1,16,'Point',NULL,'Pixel art UI icon, “spent” / empty AP pip (dark hollow), matching \`hud_ap_pip_empty\` style. Transparent background, hard pixel edges, no anti-aliasing, zero alpha bleed.
+('hud_ap_pip_empty','ui','icon','Sprites/UI/HUD/hud_ap_pip_empty',16,16,1,16,'Point',NULL,'Pixel art UI icon, “spent” / empty AP pip (dark hollow), matching `hud_ap_pip_empty` style. Transparent background, hard pixel edges, no anti-aliasing, zero alpha bleed.
 
 Spec:
 
-- Size: same canvas as your other AP pips (typically 16x16; match \`hud_ap_pip_empty\`)
+- Size: same canvas as your other AP pips (typically 16x16; match `hud_ap_pip_empty`)
 - Outer silhouette: same circle size and position as the filled AP pip / empty pip
-- Outline: 1px near-black \`#0C0C14\` (consistent with the rest of the HUD)
+- Outline: 1px near-black `#0C0C14` (consistent with the rest of the HUD)
 - Interior: hollow center filled with very dark tone (near-black), but distinct from full transparency:
-    - Inner fill: deep void \`#0C0C14\` or one step lighter (\`#141422\`) if you need it to read against black UI
+    - Inner fill: deep void `#0C0C14` or one step lighter (`#141422`) if you need it to read against black UI
     - Optional inner rim: 1px ring just inside the outline using a slightly lighter dark grey-violet to suggest depth (kept subtle)
 - Highlight: minimal (spent should read “inactive”):
     - If your other pips have a top-left specular, either remove it entirely or reduce to a single 1px muted highlight (dark grey, not violet)
@@ -1150,14 +1150,14 @@ Negative constraints:
 
 - Do not make the center transparent (it should be a “dark hollow,” not a cutout)
 - No bright violet fill; no rarity-style aura'),
-('hud_ap_pip_full','ui','icon','Sprites/UI/HUD/hud_ap_pip_full',16,16,1,16,'Point',NULL,'Pixel art UI icon, filled action point dot (AP pip), match style of \`hud_ap_pip_empty\`. Transparent background, hard pixel edges, no anti-aliasing, zero alpha bleed.
+('hud_ap_pip_full','ui','icon','Sprites/UI/HUD/hud_ap_pip_full',16,16,1,16,'Point',NULL,'Pixel art UI icon, filled action point dot (AP pip), match style of `hud_ap_pip_empty`. Transparent background, hard pixel edges, no anti-aliasing, zero alpha bleed.
 
 Spec (filled version):
 
-- Size: same canvas as \`hud_ap_pip_empty\` (typically 16x16 unless your empty pip is different)
+- Size: same canvas as `hud_ap_pip_empty` (typically 16x16 unless your empty pip is different)
 - Shape: perfect centered circle/dot, same outer silhouette and placement as the empty pip
-- Outline: 1px near-black outline \`#0C0C14\` (same as empty)
-- Fill: “guild violet” as dominant fill (use your HUD’s violet; if you need a concrete fallback: mid violet around \`#7A4CFF\`)
+- Outline: 1px near-black outline `#0C0C14` (same as empty)
+- Fill: “guild violet” as dominant fill (use your HUD’s violet; if you need a concrete fallback: mid violet around `#7A4CFF`)
 - Shading: 3-tier pixel shading (no gradients, no blur)
     - Highlight: 1–2px crescent at top-left (lighter violet)
     - Mid fill: main violet
@@ -1168,7 +1168,7 @@ Spec (filled version):
 Negative constraints:
 
 - No soft glow, no radial gradient, no bevel effects beyond the simple 3-tier pixel shading
-- No drop shadow outside the dot unless \`hud_ap_pip_empty\` includes it'),
+- No drop shadow outside the dot unless `hud_ap_pip_empty` includes it'),
 ('hud_collapse_warning','ui','icon','Sprites/UI/HUD/hud_collapse_warning',256,64,1,16,'Point',NULL,'RIFT COLLAPSING banner; red pulsing border'),
 ('hud_facing_arrow','ui','icon','Sprites/UI/hud_facing_arrow',16,16,1,16,'Point','#808090','pixel art HUD directional facing arrow, pointing up, unit facing indicator used for four rotations, steel grey, transparent background'),
 ('hud_healthbar_bg','ui','icon','Sprites/UI/hud_healthbar_bg',200,12,1,100,'Bilinear','#202020','pixel art HUD health bar background track, sunken channel, dark grey, no transparency, 200x12 pixels'),
@@ -3025,4 +3025,4 @@ ON CONFLICT (asset_key) DO UPDATE SET
 
 UPDATE public.sprite_assets SET storage_url=NULL, approved=false, qa_status='pending' WHERE asset_key IN ('bg_ashenreach','bg_brimstone','bg_combat_ashenreach','bg_combat_brimstone','bg_combat_crownspire','bg_combat_ledgerwell','bg_combat_rotking','bg_combat_saltglass','bg_combat_thornwood','bg_combat_umbracleft','bg_crownspire','bg_ledgerwell','bg_rotking','bg_saltglass','bg_thornwood','bg_umbracleft','gear_axepick_charter','gear_axepick_crown','gear_axepick_guild','gear_axepick_rift','gear_buckler_charter','gear_buckler_crown','gear_buckler_guild','gear_buckler_rift','gear_charter_curved_blade','gear_charter_kite_shield','gear_charter_scale_vest','gear_crown_crossbow','gear_crown_forged_plate','gear_crown_indulgence','gear_crown_longsword','gear_crown_mandate_shield','gear_crown_warden_mace','gear_crown_warrant','gear_crownspire_general_seal','gear_dagger_charter','gear_dagger_crown','gear_dagger_guild','gear_dagger_rift','gear_guild_crossbow','gear_guild_shield','gear_guild_shortsword','gear_guild_staff','gear_katana_charter','gear_katana_crown','gear_katana_guild','gear_katana_rift','gear_knuckles_charter','gear_knuckles_crown','gear_knuckles_guild','gear_knuckles_rift','gear_rift_tempered_axe','gear_rift_tempered_lance','gear_riftdiver_blade','gear_serratedknife_charter','gear_serratedknife_crown','gear_serratedknife_guild','gear_serratedknife_rift','gear_slingblade_charter','gear_slingblade_crown','gear_slingblade_guild','gear_slingblade_rift','gear_spear_charter','gear_spear_crown','gear_spear_guild','gear_spear_rift','gear_supply_kit','gear_trident_charter','gear_trident_crown','gear_trident_guild','gear_trident_rift','gear_void_fire_vial','gear_warhammer_charter','gear_warhammer_crown','gear_warhammer_guild','gear_warhammer_rift','gear_weapon_buckler','gear_weapon_curvedblade','icon_black_hand_logo','icon_bounty','icon_race_dwarf','icon_race_elf','icon_race_halfling','icon_race_halforc','icon_race_human','icon_race_lycan','icon_race_merpeople','icon_race_shapeshifter','icon_race_thoranxian','icon_rift_portal','icon_rune','icon_stamina','icon_void_corruption','relic_amortizedblade','relic_bailoutcoin','relic_capitalflight','relic_compoundinterest','relic_deficitengine','relic_depreciatingasset','relic_dividendchalice','relic_embezzlersring','relic_escrowshield','relic_foreclosurenotice','relic_garnishedarrowhead','relic_goldenparachute','relic_insiderintel','relic_liquidatorslens','relic_margincaller','relic_marketvolatility','relic_oathcrackedseal','relic_proxycontract','relic_redinkvambrace','relic_registrarsblindfold','relic_sanctionedmonopoly','relic_severancepackage','relic_subsidizedplate','relic_sunkcostanchor','relic_taxmansscythe','relic_thecrownstitle','relic_trickledownmantle','relic_unionbreaker','slot_accessory','slot_armor','slot_boots','slot_helm','slot_offhand','slot_weapon','status_heatbuildup','status_infected','status_slowed','portrait_druid','portrait_fighter','portrait_ironshell','portrait_rogue','portrait_shaman','portrait_swarmcaller','portrait_warden','portrait_boss_furnace_warden','portrait_boss_invisible_hand','portrait_boss_prologue','portrait_boss_rot_king','portrait_boss_umbral_sovereign','unit_artilleryengineer','unit_auditgolem','unit_cleric','unit_druid','unit_enemy_basic','unit_enemy_boss','unit_enemy_boss_furnace_warden','unit_enemy_boss_invisible_hand','unit_enemy_boss_rot_king','unit_enemy_boss_umbral_sovereign','unit_fighter','unit_ironshell','unit_mage','unit_ranger','unit_rogue','unit_shaman','unit_swarmcaller','unit_voidengineer','unit_warden','mon_ash_cinderscout','mon_ash_cinderscout_portrait','mon_ash_dustwraith','mon_ash_dustwraith_portrait','mon_ash_galefiend','mon_ash_galefiend_portrait','mon_ash_storm_sentinel','mon_ash_storm_sentinel_portrait','mon_ash_stormcaller','mon_ash_stormcaller_portrait','mon_ash_tempest_reaper','mon_ash_tempest_reaper_portrait','mon_brim_ashwalker','mon_brim_ashwalker_portrait','mon_brim_cinder_imp','mon_brim_cinder_imp_portrait','mon_brim_cinderborn_titan','mon_brim_cinderborn_titan_portrait','mon_brim_emberclaw','mon_brim_emberclaw_portrait','mon_brim_flamewretch','mon_brim_flamewretch_portrait','mon_brim_hearthbreaker','mon_brim_hearthbreaker_portrait','mon_brim_magma_slug','mon_brim_magma_slug_portrait','mon_brim_pyrefiend','mon_brim_pyrefiend_portrait','mon_brim_smoldergeist','mon_brim_smoldergeist_portrait','mon_crown_boulder_imp','mon_crown_boulder_imp_portrait','mon_crown_cliff_stalker','mon_crown_cliff_stalker_portrait','mon_crown_harrier','mon_crown_harrier_portrait','mon_crown_highland_caster','mon_crown_highland_caster_portrait','mon_crown_highland_sentinel','mon_crown_highland_sentinel_portrait','mon_crown_rampart_walker','mon_crown_rampart_walker_portrait','mon_crown_ridgeguard','mon_crown_ridgeguard_portrait','mon_crown_shovepike','mon_crown_shovepike_portrait','mon_crown_tyrant_of_heights','mon_crown_tyrant_of_heights_portrait','mon_monster_ash_manta','mon_monster_ash_manta_portrait','mon_monster_ash_swallow','mon_monster_ash_swallow_portrait','mon_monster_ashram_hog','mon_monster_ashram_hog_portrait','mon_monster_basalt_caiman','mon_monster_basalt_caiman_portrait','mon_monster_basalt_crab','mon_monster_basalt_crab_portrait','mon_monster_bell_wyrm','mon_monster_bell_wyrm_portrait','mon_monster_bloom_ledger','mon_monster_bloom_ledger_portrait','mon_monster_bone_heron','mon_monster_bone_heron_portrait','mon_monster_boulder_pangolin','mon_monster_boulder_pangolin_portrait','mon_monster_brine_bailiff','mon_monster_brine_bailiff_portrait','mon_monster_candle_dog','mon_monster_candle_dog_portrait','mon_monster_choir_frog','mon_monster_choir_frog_portrait','mon_monster_cinder_kite','mon_monster_cinder_kite_portrait','mon_monster_clickhammer_bat','mon_monster_clickhammer_bat_portrait','mon_monster_cliffgator','mon_monster_cliffgator_portrait','mon_monster_coughcrow','mon_monster_coughcrow_portrait','mon_monster_courier','mon_monster_courier_portrait','mon_monster_crownstag','mon_monster_crownstag_portrait','mon_monster_custodian_ox','mon_monster_custodian_ox_portrait','mon_monster_driftfox','mon_monster_driftfox_portrait','mon_monster_duskback_mauler','mon_monster_duskback_mauler_portrait','mon_monster_ember_skink','mon_monster_ember_skink_portrait','mon_monster_filter_deer','mon_monster_filter_deer_portrait','mon_monster_forge_toad','mon_monster_forge_toad_portrait','mon_monster_glassjaw','mon_monster_glassjaw_portrait','mon_monster_gloam_hart_stalker','mon_monster_gloam_hart_stalker_portrait','mon_monster_gloomweb_weaver','mon_monster_gloomweb_weaver_portrait','mon_monster_graft_wasp','mon_monster_graft_wasp_portrait','mon_monster_index_moth_burst','mon_monster_index_moth_burst_portrait','mon_monster_ink_moth','mon_monster_ink_moth_portrait','mon_monster_lantern_tick','mon_monster_lantern_tick_portrait','mon_monster_ledger_eel','mon_monster_ledger_eel_portrait','mon_monster_lungcrawler','mon_monster_lungcrawler_portrait','mon_monster_lurch_without','mon_monster_lurch_without_portrait','mon_monster_mawpatch_dog','mon_monster_mawpatch_dog_portrait','mon_monster_mould_mite_nurse','mon_monster_mould_mite_nurse_portrait','mon_monster_needle_grouse','mon_monster_needle_grouse_portrait','mon_monster_ocular_cairn_slug','mon_monster_ocular_cairn_slug_portrait','mon_monster_particle_stalker','mon_monster_particle_stalker_portrait','mon_monster_prism_hyena','mon_monster_prism_hyena_portrait','mon_monster_prism_sandcat','mon_monster_prism_sandcat_portrait','mon_monster_residue_walker','mon_monster_residue_walker_portrait','mon_monster_ridge_hawk','mon_monster_ridge_hawk_portrait','mon_monster_rootjaw_bearpig','mon_monster_rootjaw_bearpig_portrait','mon_monster_salt_slug','mon_monster_salt_slug_portrait','mon_monster_sap_drinker_slug','mon_monster_sap_drinker_slug_portrait','mon_monster_sapper_mink','mon_monster_sapper_mink_portrait','mon_monster_scree_kite_fox','mon_monster_scree_kite_fox_portrait','mon_monster_seal_singer_lamprey','mon_monster_seal_singer_lamprey_portrait','mon_monster_shard_stitch_crab','mon_monster_shard_stitch_crab_portrait','mon_monster_shardback_armadog','mon_monster_shardback_armadog_portrait','mon_monster_shatterfin_skink','mon_monster_shatterfin_skink_portrait','mon_monster_shovegoat','mon_monster_shovegoat_portrait','mon_monster_slag_tortoise','mon_monster_slag_tortoise_portrait','mon_monster_sowmaggot','mon_monster_sowmaggot_portrait','mon_monster_spore_caller_toad','mon_monster_spore_caller_toad_portrait','mon_monster_stork','mon_monster_stork_portrait','mon_monster_strider_mantisdeer','mon_monster_strider_mantisdeer_portrait','mon_monster_sump_hog','mon_monster_sump_hog_portrait','mon_monster_tally_crane','mon_monster_tally_crane_portrait','mon_monster_the_absorption','mon_monster_the_absorption_portrait','mon_monster_the_extrusion','mon_monster_the_extrusion_portrait','mon_monster_the_graft','mon_monster_the_graft_portrait','mon_monster_the_inference','mon_monster_the_inference_portrait','mon_monster_the_notation','mon_monster_the_notation_portrait','mon_monster_the_overpressure','mon_monster_the_overpressure_portrait','mon_monster_the_potential','mon_monster_the_potential_portrait','mon_monster_the_sap_strider','mon_monster_the_sap_strider_portrait','mon_monster_the_sinkhoof','mon_monster_the_sinkhoof_portrait','mon_monster_the_tag','mon_monster_the_tag_portrait','mon_monster_the_turnover','mon_monster_the_turnover_portrait','mon_monster_thorn_spitter','mon_monster_thorn_spitter_portrait','mon_monster_toll_eater','mon_monster_toll_eater_portrait','mon_monster_veil_lynx','mon_monster_veil_lynx_portrait','mon_monster_weight_caster','mon_monster_weight_caster_portrait','mon_monster_wind_caller_marmot','mon_monster_wind_caller_marmot_portrait','mon_plague_blightworm','mon_plague_blightworm_portrait','mon_plague_crypt_ghoul','mon_plague_crypt_ghoul_portrait','mon_plague_grave_creep','mon_plague_grave_creep_portrait','mon_plague_infestor','mon_plague_infestor_portrait','mon_plague_mortis_shade','mon_plague_mortis_shade_portrait','mon_plague_rot_herald','mon_plague_rot_herald_portrait','mon_plague_rot_king_vespar','mon_plague_rot_king_vespar_portrait','mon_plague_rotbeetle','mon_plague_rotbeetle_portrait','mon_plague_sporeling','mon_plague_sporeling_portrait','mon_salt_brittle_golem','mon_salt_brittle_golem_portrait','mon_salt_crystalline_sovereign','mon_salt_crystalline_sovereign_portrait','mon_salt_glass_titan','mon_salt_glass_titan_portrait','mon_salt_glasscritter','mon_salt_glasscritter_portrait','mon_salt_razorfin','mon_salt_razorfin_portrait','mon_salt_shardling','mon_salt_shardling_portrait','mon_salt_splinter_wraith','mon_salt_splinter_wraith_portrait','mon_shadow_duskfiend','mon_shadow_duskfiend_portrait','mon_shadow_eclipsar','mon_shadow_eclipsar_portrait','mon_shadow_gloomrat','mon_shadow_gloomrat_portrait','mon_shadow_hollowecho','mon_shadow_hollowecho_portrait','mon_shadow_nightshade_imp','mon_shadow_nightshade_imp_portrait','mon_shadow_umbral_warden','mon_shadow_umbral_warden_portrait','mon_shadow_veilshroud','mon_shadow_veilshroud_portrait','mon_shadow_velithrath','mon_shadow_velithrath_portrait','mon_shadow_wraithcrawler','mon_shadow_wraithcrawler_portrait','mon_thorn_briarwarden','mon_thorn_briarwarden_portrait','mon_thorn_spore_drifter','mon_thorn_spore_drifter_portrait','mon_thorn_tanglesap','mon_thorn_tanglesap_portrait','mon_thorn_thornlord','mon_thorn_thornlord_portrait','mon_thorn_verdant_binder','mon_thorn_verdant_binder_portrait','mon_thorn_verdant_monolith','mon_thorn_verdant_monolith_portrait','mon_thorn_vinestrider','mon_thorn_vinestrider_portrait','mon_void_auditor_adept','mon_void_auditor_adept_portrait','mon_void_compliance_wraith','mon_void_compliance_wraith_portrait','mon_void_grand_auditor','mon_void_grand_auditor_portrait','mon_void_ledger_drone','mon_void_ledger_drone_portrait','mon_void_ledger_sovereign','mon_void_ledger_sovereign_portrait','mon_void_nullscribe','mon_void_nullscribe_portrait','mon_void_paradox_spawn','mon_void_paradox_spawn_portrait','relic_theauditbell','relic_theblankledger');
 
-COMMIT;`;
+COMMIT;
