@@ -193,6 +193,28 @@ function ManifestPreview({ url, compact = false, expectedFrameCount }: { url: st
   );
 }
 
+// Download a remote (cross-origin) asset as a blob so the browser doesn't
+// navigate away to the image — the <a download> attribute is ignored cross-origin.
+async function downloadAssetAsBlob(url: string, filename: string) {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (e) {
+    console.error('Download failed', e);
+    toast.error('Download failed — opening image in new tab');
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
 const BatchQueuePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -1118,12 +1140,7 @@ const BatchQueuePage = () => {
                             size="sm"
                             className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
                             title="Download"
-                            onClick={() => {
-                              const a = document.createElement('a');
-                              a.href = asset.storage_url!;
-                              a.download = `${asset.asset_key}.png`;
-                              a.click();
-                            }}
+                            onClick={() => downloadAssetAsBlob(asset.storage_url!, `${asset.asset_key}.png`)}
                           >
                             ⬇
                           </Button>
@@ -1247,12 +1264,7 @@ const BatchQueuePage = () => {
                     variant="outline"
                     size="sm"
                     className="text-[10px] font-display tracking-wider"
-                    onClick={() => {
-                      const a = document.createElement('a');
-                      a.href = previewAsset.storage_url!;
-                      a.download = `${previewAsset.asset_key}.png`;
-                      a.click();
-                    }}
+                    onClick={() => downloadAssetAsBlob(previewAsset.storage_url!, `${previewAsset.asset_key}.png`)}
                   >
                     ⬇ DOWNLOAD
                   </Button>
