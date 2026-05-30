@@ -559,6 +559,9 @@ serve(async (req) => {
             // Post-process: strip #0C0C14 background to alpha
             if (mimeType === "image/png") {
               bytes = stripBackground(bytes);
+              // A1+A4: enforce exact cell dims + alpha cleanup (per-frame = square cell)
+              const cellSize = spec.target_h as number;
+              bytes = normalizeToSpec(bytes, cellSize, cellSize);
             }
 
             const { error: uploadErr } = await supabase.storage
@@ -602,7 +605,13 @@ serve(async (req) => {
                   const binaryStr = atob(base64Data);
                   const bytes = new Uint8Array(binaryStr.length);
                   for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
-                  await supabase.storage.from("pixel-assets").upload(framePath, bytes, { contentType: mimeType, upsert: false });
+                  let retryBytes = bytes;
+                  if (mimeType === "image/png") {
+                    retryBytes = stripBackground(retryBytes);
+                    const cellSize = spec.target_h as number;
+                    retryBytes = normalizeToSpec(retryBytes, cellSize, cellSize);
+                  }
+                  await supabase.storage.from("pixel-assets").upload(framePath, retryBytes, { contentType: mimeType, upsert: false });
                   const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(framePath);
                   frameUrls[mi] = urlData.publicUrl;
                   break;
