@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.coverage]
 verify_jwt = false
+
+[functions.reset-forge]
+verify_jwt = false
