@@ -276,6 +276,47 @@ const BatchQueuePage = () => {
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
+  // Live-derive the preview asset from current assets list so status / image
+  // updates flow into the open dialog instead of showing a stale snapshot.
+  const previewAsset = useMemo(
+    () => (previewKey ? assets.find(a => a.asset_key === previewKey) ?? null : null),
+    [previewKey, assets],
+  );
+
+  // Keep ?preview=<key> in the URL so a reload restores the dialog.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (previewKey) url.searchParams.set('preview', previewKey);
+    else url.searchParams.delete('preview');
+    window.history.replaceState({}, '', url.toString());
+  }, [previewKey]);
+
+  // Step to the previous / next asset currently loaded in the table.
+  const stepPreview = useCallback((dir: 1 | -1) => {
+    setPreviewKey(curr => {
+      if (!curr || assets.length === 0) return curr;
+      const idx = assets.findIndex(a => a.asset_key === curr);
+      if (idx === -1) return curr;
+      const next = assets[(idx + dir + assets.length) % assets.length];
+      return next.asset_key;
+    });
+  }, [assets]);
+
+  // Arrow-key navigation inside the preview dialog. Escape closes (Radix default).
+  useEffect(() => {
+    if (!previewKey) return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inEditor = target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      if (inEditor) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); stepPreview(1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); stepPreview(-1); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewKey, stepPreview]);
+
   const toggleSelect = (key: string) => {
     setSelected(prev => {
       const next = new Set(prev);
