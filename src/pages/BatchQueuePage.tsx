@@ -1140,12 +1140,7 @@ const BatchQueuePage = () => {
                             size="sm"
                             className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-accent"
                             title="Download"
-                            onClick={() => {
-                              const a = document.createElement('a');
-                              a.href = asset.storage_url!;
-                              a.download = `${asset.asset_key}.png`;
-                              a.click();
-                            }}
+                            onClick={() => downloadAssetAsBlob(asset.storage_url!, `${asset.asset_key}.png`)}
                           >
                             ⬇
                           </Button>
@@ -1269,12 +1264,7 @@ const BatchQueuePage = () => {
                     variant="outline"
                     size="sm"
                     className="text-[10px] font-display tracking-wider"
-                    onClick={() => {
-                      const a = document.createElement('a');
-                      a.href = previewAsset.storage_url!;
-                      a.download = `${previewAsset.asset_key}.png`;
-                      a.click();
-                    }}
+                    onClick={() => downloadAssetAsBlob(previewAsset.storage_url!, `${previewAsset.asset_key}.png`)}
                   >
                     ⬇ DOWNLOAD
                   </Button>
