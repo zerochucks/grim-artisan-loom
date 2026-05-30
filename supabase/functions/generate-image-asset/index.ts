@@ -441,8 +441,15 @@ serve(async (req) => {
       });
     }
 
+    // ─── A1+A4: enforce exact spec dims + alpha cleanup for pixel tiers ──
+    let finalImage = imageBase64;
+    if (isPixelTier(tier)) {
+      finalImage = normalizePixelPng(imageBase64, width, height);
+      console.log(`[${tier}] normalized to exact spec ${width}×${height}`);
+    }
+
     return new Response(JSON.stringify({
-      image: imageBase64,
+      image: finalImage,
       tier,
       skipQuantize: tier === "background" ? true : (skipQuantize ?? false),
     }), {
