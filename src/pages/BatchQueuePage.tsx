@@ -228,7 +228,10 @@ const BatchQueuePage = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [previewAsset, setPreviewAsset] = useState<SpriteAssetRow | null>(null);
+  const [previewKey, setPreviewKey] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('preview');
+  });
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
   const [variationStrength, setVariationStrength] = useState(50);
