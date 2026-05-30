@@ -74,6 +74,61 @@ const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clot
 // ─── HARD NO-TEXT NEGATIVE (A3) ─────────────────────────────────
 const NEG_NO_TEXT = "ABSOLUTELY NO text, NO labels, NO frame numbers, NO captions, NO titles, NO subtitles, NO UI chrome, NO frame borders, NO grid lines, NO arrows, NO callouts, NO signatures anywhere in the image";
 
+// ─── A1+A4: SERVER-SIDE NORMALIZE TO SPEC + ALPHA CLEANUP ──────
+// Decode the model's PNG, nearest-neighbor resize to the exact target_w×target_h,
+// threshold semi-transparent fringe pixels to alpha=0. Returns base64 data URL.
+function normalizePixelPng(dataUrl: string, targetW: number, targetH: number): string {
+  try {
+    const b64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const decoded = UPNG.decode(bytes.buffer);
+    const srcRgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const sw = decoded.width, sh = decoded.height;
+    if (sw === targetW && sh === targetH) {
+      // still run alpha cleanup
+      for (let i = 3; i < srcRgba.length; i += 4) {
+        if (srcRgba[i] > 0 && srcRgba[i] < 128) srcRgba[i] = 0;
+        else if (srcRgba[i] >= 128 && srcRgba[i] < 255) srcRgba[i] = 255;
+      }
+      const enc = UPNG.encode([srcRgba.buffer], sw, sh, 0);
+      return `data:image/png;base64,${b64encode(new Uint8Array(enc))}`;
+    }
+    const out = new Uint8Array(targetW * targetH * 4);
+    const xRatio = sw / targetW;
+    const yRatio = sh / targetH;
+    for (let y = 0; y < targetH; y++) {
+      const sy = Math.min(sh - 1, Math.floor(y * yRatio));
+      for (let x = 0; x < targetW; x++) {
+        const sx = Math.min(sw - 1, Math.floor(x * xRatio));
+        const si = (sy * sw + sx) * 4;
+        const di = (y * targetW + x) * 4;
+        out[di] = srcRgba[si];
+        out[di + 1] = srcRgba[si + 1];
+        out[di + 2] = srcRgba[si + 2];
+        const a = srcRgba[si + 3];
+        // Alpha-threshold (A4): kill semi-transparent fringe
+        out[di + 3] = a < 128 ? 0 : (a < 255 ? 255 : 255);
+      }
+    }
+    const png = UPNG.encode([out.buffer], targetW, targetH, 0);
+    return `data:image/png;base64,${b64encode(new Uint8Array(png))}`;
+  } catch (err) {
+    console.error("[normalize] failed, returning original:", err);
+    return dataUrl;
+  }
+}
+
+function b64encode(bytes: Uint8Array): string {
+  let s = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as unknown as number[]);
+  }
+  return btoa(s);
+}
+
 // ─── QA SELF-CHECK (appended to every prompt) ───────────────────
 
 const QA_PIXEL = `Self-check before finalizing:
