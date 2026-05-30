@@ -1123,7 +1123,7 @@ const BatchQueuePage = () => {
                       isManifestUrl(asset.storage_url) ? (
                         <div
                           className="cursor-pointer hover:ring-1 hover:ring-primary transition-all"
-                          onClick={() => setPreviewAsset(asset)}
+                          onClick={() => setPreviewKey(asset.asset_key)}
                           title="Click to preview frames"
                         >
                           <ManifestPreview url={asset.storage_url} compact expectedFrameCount={asset.frame_count} />
@@ -1135,7 +1135,7 @@ const BatchQueuePage = () => {
                             alt={asset.asset_key}
                             className="h-8 border border-border bg-card cursor-pointer hover:ring-1 hover:ring-primary transition-all"
                             style={{ imageRendering: 'pixelated' }}
-                            onClick={() => setPreviewAsset(asset)}
+                            onClick={() => setPreviewKey(asset.asset_key)}
                             title="Click to enlarge"
                           />
                           <Button
