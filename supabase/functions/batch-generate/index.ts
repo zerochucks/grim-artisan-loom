@@ -32,6 +32,45 @@ function stripBackground(pngBytes: Uint8Array): Uint8Array {
   }
 }
 
+// ─── A1+A4: NORMALIZE TO SPEC DIMS (nearest-neighbor) + ALPHA CLEANUP ──
+// Decode PNG, NN-resize to target_w×target_h, threshold fringe alpha to binary.
+function normalizeToSpec(pngBytes: Uint8Array, targetW: number, targetH: number): Uint8Array {
+  try {
+    const decoded = UPNG.decode(pngBytes.buffer);
+    const src = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const sw = decoded.width, sh = decoded.height;
+    const needsResize = sw !== targetW || sh !== targetH;
+    const dst = needsResize ? new Uint8Array(targetW * targetH * 4) : src;
+    if (needsResize) {
+      const xRatio = sw / targetW;
+      const yRatio = sh / targetH;
+      for (let y = 0; y < targetH; y++) {
+        const sy = Math.min(sh - 1, Math.floor(y * yRatio));
+        for (let x = 0; x < targetW; x++) {
+          const sx = Math.min(sw - 1, Math.floor(x * xRatio));
+          const si = (sy * sw + sx) * 4;
+          const di = (y * targetW + x) * 4;
+          dst[di] = src[si];
+          dst[di + 1] = src[si + 1];
+          dst[di + 2] = src[si + 2];
+          dst[di + 3] = src[si + 3];
+        }
+      }
+    }
+    // Alpha threshold: binarize edges (kill semi-transparent fringe)
+    for (let i = 3; i < dst.length; i += 4) {
+      if (dst[i] > 0 && dst[i] < 128) dst[i] = 0;
+      else if (dst[i] >= 128 && dst[i] < 255) dst[i] = 255;
+    }
+    const enc = UPNG.encode([dst.buffer], targetW, targetH, 0);
+    console.log(`[normalize] ${sw}×${sh} → ${targetW}×${targetH}`);
+    return new Uint8Array(enc);
+  } catch (err) {
+    console.error("[normalize] Failed, returning original:", err);
+    return pngBytes;
+  }
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
