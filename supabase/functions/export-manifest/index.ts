@@ -41,8 +41,19 @@ Deno.serve(async (req) => {
       sorting_layer: ({ background: "Background", tile: "Terrain", unit: "Units", vfx: "VFX_World", portrait: "UI_Overlay", icon: "UI_Overlay", node: "UI_Overlay", ui: "UI_Overlay", font: "UI_Overlay", marketing: "UI_Overlay" } as any)[r.tier] || "Default",
     };
     if (isAnim && r.tier === "unit") {
-      if (fc === 10) e.animation = { fps: 8, loop: true, frame_order: [...Array(10).keys()], clips: [{ name: "idle", frames: [0,1,2,3], fps: 5, loop: true }, { name: "attack", frames: [4,5,6], fps: 10, loop: false }, { name: "death", frames: [7,8,9], fps: 6, loop: false }] };
-      else if (fc === 5) e.animation = { fps: 6, loop: true, frame_order: [...Array(5).keys()], clips: [{ name: "idle", frames: [0,1], fps: 5, loop: true }, { name: "attack", frames: [2,3], fps: 10, loop: false }, { name: "death", frames: [4], fps: 6, loop: false }] };
+      // A6: canonical 10f mapping = Idle[0] / Walk[1,2,3] / Attack[4,5,6] / Hit[7] / Death[8,9]
+      if (fc === 10) e.animation = { fps: 8, loop: true, frame_order: [...Array(10).keys()], clips: [
+        { name: "idle",   frames: [0],       fps: 4,  loop: true  },
+        { name: "walk",   frames: [1, 2, 3], fps: 8,  loop: true  },
+        { name: "attack", frames: [4, 5, 6], fps: 10, loop: false },
+        { name: "hit",    frames: [7],       fps: 6,  loop: false },
+        { name: "death",  frames: [8, 9],    fps: 6,  loop: false },
+      ] };
+      else if (fc === 5) e.animation = { fps: 6, loop: true, frame_order: [...Array(5).keys()], clips: [
+        { name: "idle",   frames: [0, 1], fps: 5,  loop: true  },
+        { name: "attack", frames: [2, 3], fps: 10, loop: false },
+        { name: "death",  frames: [4],    fps: 6,  loop: false },
+      ] };
     } else if (isAnim && r.tier === "vfx") {
       const loop = /lightning|ambient|fog|glow|lava/.test(r.asset_key);
       e.animation = { fps: 8, loop, frame_order: [...Array(fc).keys()], clips: [{ name: "play", frames: [...Array(fc).keys()], fps: 8, loop }] };
@@ -58,7 +69,7 @@ Deno.serve(async (req) => {
     version: "2.0", generated: new Date().toISOString().split("T")[0], total_assets: assets.length,
     notes: {
       cell_dimensions: "cell_w/cell_h derived from registry target_w/target_h. Actual PNGs (especially units) may differ (e.g. 1408x768 with 128x128 cells). AssetPostprocessor reads actual file dims for slicing.",
-      animation_clips: "Units: idle(0-3)/attack(4-6)/death(7-9) for 10f; idle(0-1)/attack(2-3)/death(4) for 5f. No walk cycle.",
+      animation_clips: "Units 10f: idle[0] / walk[1,2,3] / attack[4,5,6] / hit[7] / death[8,9]. Units 5f: idle[0,1] / attack[2,3] / death[4].",
       sorting_layers: "Recommended Unity sorting layer assignments."
     },
     assets
