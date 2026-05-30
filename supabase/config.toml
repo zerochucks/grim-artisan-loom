@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.reset-forge]
 verify_jwt = false
+
+[functions.apply-reseed]
+verify_jwt = false
