@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import UPNG from "https://esm.sh/upng-js@2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,6 +70,9 @@ const LIGHTING = {
 // ─── UNIVERSAL NEGATIVES ────────────────────────────────────────
 
 const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no text overlays, no watermarks, no lens flare, no chromatic aberration, no AI artifacts (extra fingers, merged limbs, floating objects)";
+
+// ─── HARD NO-TEXT NEGATIVE (A3) ─────────────────────────────────
+const NEG_NO_TEXT = "ABSOLUTELY NO text, NO labels, NO frame numbers, NO captions, NO titles, NO subtitles, NO UI chrome, NO frame borders, NO grid lines, NO arrows, NO callouts, NO signatures anywhere in the image";
 
 // ─── QA SELF-CHECK (appended to every prompt) ───────────────────
 
@@ -234,13 +238,13 @@ Target: ${width}×${height} px`;
   // Tier-specific negatives
   let tierNeg = "";
   if (isPixel) {
-    tierNeg = ", no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering, no ink illustration, no painterly texture";
+    tierNeg = ", no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering, no ink illustration, no painterly texture, " + NEG_NO_TEXT;
   }
   if (tier === "background") {
-    tierNeg = ", no characters present, no readable text, no UI elements, no pixel art style";
+    tierNeg = ", no characters present, no UI elements, no pixel art style, " + NEG_NO_TEXT;
   }
   if (tier === "portrait") {
-    tierNeg = ", no extra limbs, no deformed hands, no blurred face, no background scenery, no pixel art style, no noisy micro-texture";
+    tierNeg = ", no extra limbs, no deformed hands, no blurred face, no background scenery, no pixel art style, no noisy micro-texture, " + NEG_NO_TEXT;
   }
 
   return `═══ BRAND ═══
