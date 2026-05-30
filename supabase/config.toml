@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-image-asset]
 verify_jwt = false
+
+[functions.coverage]
+verify_jwt = false
