@@ -646,9 +646,12 @@ serve(async (req) => {
             clips: spec.tier === "unit"
               ? frameCount === 10
                 ? [
-                    { name: "idle", frames: [0, 1, 2, 3], fps: 5, loop: true },
+                    // A6: canonical 10f mapping = Idle / Walk×3 / Attack×3 / Hit / Death×2
+                    { name: "idle", frames: [0], fps: 4, loop: true },
+                    { name: "walk", frames: [1, 2, 3], fps: 8, loop: true },
                     { name: "attack", frames: [4, 5, 6], fps: 10, loop: false },
-                    { name: "death", frames: [7, 8, 9], fps: 6, loop: false },
+                    { name: "hit", frames: [7], fps: 6, loop: false },
+                    { name: "death", frames: [8, 9], fps: 6, loop: false },
                   ]
                 : frameCount === 5
                 ? [
