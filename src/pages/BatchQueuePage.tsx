@@ -241,6 +241,37 @@ const BatchQueuePage = () => {
   const [globalCategories, setGlobalCategories] = useState<string[]>([]);
   const [globalStats, setGlobalStats] = useState<Record<string, number>>({});
 
+  // Persist scroll position per filter combination so reload returns to the same row.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollKey = `batchQueueScroll:${filterTier}|${filterCategory}|${filterStatus}`;
+  const pendingScrollRestore = useRef(true);
+
+  useEffect(() => {
+    // New filter combo → request restore on next data settle.
+    pendingScrollRestore.current = true;
+  }, [scrollKey]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!pendingScrollRestore.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const raw = sessionStorage.getItem(scrollKey);
+    const top = raw ? parseInt(raw, 10) : 0;
+    // Wait a frame so the table has laid out.
+    requestAnimationFrame(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = Number.isFinite(top) ? top : 0;
+      pendingScrollRestore.current = false;
+    });
+  }, [loading, scrollKey, assets.length]);
+
+  const handleScroll = useCallback(() => {
+    if (pendingScrollRestore.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    sessionStorage.setItem(scrollKey, String(el.scrollTop));
+  }, [scrollKey]);
+
   const fetchAssets = useCallback(async () => {
     setLoading(true);
 
