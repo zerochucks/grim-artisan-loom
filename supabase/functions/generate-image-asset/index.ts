@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import UPNG from "https://esm.sh/upng-js@2.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,6 +70,64 @@ const LIGHTING = {
 // ─── UNIVERSAL NEGATIVES ────────────────────────────────────────
 
 const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no text overlays, no watermarks, no lens flare, no chromatic aberration, no AI artifacts (extra fingers, merged limbs, floating objects)";
+
+// ─── HARD NO-TEXT NEGATIVE (A3) ─────────────────────────────────
+const NEG_NO_TEXT = "ABSOLUTELY NO text, NO labels, NO frame numbers, NO captions, NO titles, NO subtitles, NO UI chrome, NO frame borders, NO grid lines, NO arrows, NO callouts, NO signatures anywhere in the image";
+
+// ─── A1+A4: SERVER-SIDE NORMALIZE TO SPEC + ALPHA CLEANUP ──────
+// Decode the model's PNG, nearest-neighbor resize to the exact target_w×target_h,
+// threshold semi-transparent fringe pixels to alpha=0. Returns base64 data URL.
+function normalizePixelPng(dataUrl: string, targetW: number, targetH: number): string {
+  try {
+    const b64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const decoded = UPNG.decode(bytes.buffer);
+    const srcRgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const sw = decoded.width, sh = decoded.height;
+    if (sw === targetW && sh === targetH) {
+      // still run alpha cleanup
+      for (let i = 3; i < srcRgba.length; i += 4) {
+        if (srcRgba[i] > 0 && srcRgba[i] < 128) srcRgba[i] = 0;
+        else if (srcRgba[i] >= 128 && srcRgba[i] < 255) srcRgba[i] = 255;
+      }
+      const enc = UPNG.encode([srcRgba.buffer], sw, sh, 0);
+      return `data:image/png;base64,${b64encode(new Uint8Array(enc))}`;
+    }
+    const out = new Uint8Array(targetW * targetH * 4);
+    const xRatio = sw / targetW;
+    const yRatio = sh / targetH;
+    for (let y = 0; y < targetH; y++) {
+      const sy = Math.min(sh - 1, Math.floor(y * yRatio));
+      for (let x = 0; x < targetW; x++) {
+        const sx = Math.min(sw - 1, Math.floor(x * xRatio));
+        const si = (sy * sw + sx) * 4;
+        const di = (y * targetW + x) * 4;
+        out[di] = srcRgba[si];
+        out[di + 1] = srcRgba[si + 1];
+        out[di + 2] = srcRgba[si + 2];
+        const a = srcRgba[si + 3];
+        // Alpha-threshold (A4): kill semi-transparent fringe
+        out[di + 3] = a < 128 ? 0 : (a < 255 ? 255 : 255);
+      }
+    }
+    const png = UPNG.encode([out.buffer], targetW, targetH, 0);
+    return `data:image/png;base64,${b64encode(new Uint8Array(png))}`;
+  } catch (err) {
+    console.error("[normalize] failed, returning original:", err);
+    return dataUrl;
+  }
+}
+
+function b64encode(bytes: Uint8Array): string {
+  let s = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    s += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as unknown as number[]);
+  }
+  return btoa(s);
+}
 
 // ─── QA SELF-CHECK (appended to every prompt) ───────────────────
 
@@ -192,11 +251,13 @@ function buildPromptForTier(
     layoutBlock = `
 ═══ SPRITE SHEET LAYOUT (HARD REQUIREMENTS) ═══
 EXACT canvas size: ${width}×${height} px
-EXACT frames: ${frameCount} frames, single horizontal row, left-to-right
-EXACT cell size: ${cellW}×${frameH} px per frame
-No padding between frames; each cell fully occupied by character
-Do NOT add extra frames; do NOT change aspect ratio
-Keep character anchored: feet locked to consistent pixel row in EVERY frame
+EXACT frames: ${frameCount} frames laid out LEFT-TO-RIGHT in a SINGLE HORIZONTAL ROW (1 row × ${frameCount} columns).
+Do NOT use a 2-row grid. Do NOT use a 5×2 grid. Do NOT use ANY grid layout. STRIP ONLY.
+EXACT cell size: ${cellW}×${frameH} px per frame, uniform spacing.
+No padding between frames; each cell fully occupied by character.
+Character centered in every cell at IDENTICAL scale; feet aligned to the SAME pixel baseline row in EVERY frame; 1–2px transparent padding per cell.
+Do NOT add extra frames; do NOT change aspect ratio.
+NO text, NO frame numbers, NO labels like "Idle1" or "Walk1" inside any cell.
 Frame sequence: Idle1, Walk1, Walk2, Walk3, AttackWindup, AttackSwing, AttackRecover, HitStagger, DeathFall, DeadFlat`;
   } else if (tier === "vfx") {
     const frameCount = Math.round(width / height) || 6;
@@ -234,13 +295,13 @@ Target: ${width}×${height} px`;
   // Tier-specific negatives
   let tierNeg = "";
   if (isPixel) {
-    tierNeg = ", no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering, no ink illustration, no painterly texture";
+    tierNeg = ", no gradients, no blur, no anti-aliasing, no photorealism, no 3D rendering, no ink illustration, no painterly texture, " + NEG_NO_TEXT;
   }
   if (tier === "background") {
-    tierNeg = ", no characters present, no readable text, no UI elements, no pixel art style";
+    tierNeg = ", no characters present, no UI elements, no pixel art style, " + NEG_NO_TEXT;
   }
   if (tier === "portrait") {
-    tierNeg = ", no extra limbs, no deformed hands, no blurred face, no background scenery, no pixel art style, no noisy micro-texture";
+    tierNeg = ", no extra limbs, no deformed hands, no blurred face, no background scenery, no pixel art style, no noisy micro-texture, " + NEG_NO_TEXT;
   }
 
   return `═══ BRAND ═══
@@ -380,8 +441,15 @@ serve(async (req) => {
       });
     }
 
+    // ─── A1+A4: enforce exact spec dims + alpha cleanup for pixel tiers ──
+    let finalImage = imageBase64;
+    if (isPixelTier(tier)) {
+      finalImage = normalizePixelPng(imageBase64, width, height);
+      console.log(`[${tier}] normalized to exact spec ${width}×${height}`);
+    }
+
     return new Response(JSON.stringify({
-      image: imageBase64,
+      image: finalImage,
       tier,
       skipQuantize: tier === "background" ? true : (skipQuantize ?? false),
     }), {

@@ -32,6 +32,45 @@ function stripBackground(pngBytes: Uint8Array): Uint8Array {
   }
 }
 
+// ─── A1+A4: NORMALIZE TO SPEC DIMS (nearest-neighbor) + ALPHA CLEANUP ──
+// Decode PNG, NN-resize to target_w×target_h, threshold fringe alpha to binary.
+function normalizeToSpec(pngBytes: Uint8Array, targetW: number, targetH: number): Uint8Array {
+  try {
+    const decoded = UPNG.decode(pngBytes.buffer);
+    const src = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const sw = decoded.width, sh = decoded.height;
+    const needsResize = sw !== targetW || sh !== targetH;
+    const dst = needsResize ? new Uint8Array(targetW * targetH * 4) : src;
+    if (needsResize) {
+      const xRatio = sw / targetW;
+      const yRatio = sh / targetH;
+      for (let y = 0; y < targetH; y++) {
+        const sy = Math.min(sh - 1, Math.floor(y * yRatio));
+        for (let x = 0; x < targetW; x++) {
+          const sx = Math.min(sw - 1, Math.floor(x * xRatio));
+          const si = (sy * sw + sx) * 4;
+          const di = (y * targetW + x) * 4;
+          dst[di] = src[si];
+          dst[di + 1] = src[si + 1];
+          dst[di + 2] = src[si + 2];
+          dst[di + 3] = src[si + 3];
+        }
+      }
+    }
+    // Alpha threshold: binarize edges (kill semi-transparent fringe)
+    for (let i = 3; i < dst.length; i += 4) {
+      if (dst[i] > 0 && dst[i] < 128) dst[i] = 0;
+      else if (dst[i] >= 128 && dst[i] < 255) dst[i] = 255;
+    }
+    const enc = UPNG.encode([dst.buffer], targetW, targetH, 0);
+    console.log(`[normalize] ${sw}×${sh} → ${targetW}×${targetH}`);
+    return new Uint8Array(enc);
+  } catch (err) {
+    console.error("[normalize] Failed, returning original:", err);
+    return pngBytes;
+  }
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -66,7 +105,7 @@ const MATERIAL_DICT = `Material Dictionary (use ONLY these unless asset explicit
 - Jade/Ledger: #32C882 accents, limited bloom
 - Shadows: deep indigo / near-black — NOT pure black everywhere`;
 
-const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no text overlays, no watermarks, no AI artifacts";
+const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no watermarks, no AI artifacts, ABSOLUTELY NO text, NO labels, NO frame numbers, NO captions, NO titles, NO subtitles, NO UI chrome, NO frame borders, NO grid lines, NO arrows, NO callouts, NO signatures anywhere in the image";
 
 const TIER_RULES: Record<string, string> = {
   icon: `DO: 3-value shading (highlight/mid/shadow), simple internal linework, bold readable silhouette, centered, fill frame
@@ -520,6 +559,9 @@ serve(async (req) => {
             // Post-process: strip #0C0C14 background to alpha
             if (mimeType === "image/png") {
               bytes = stripBackground(bytes);
+              // A1+A4: enforce exact cell dims + alpha cleanup (per-frame = square cell)
+              const cellSize = spec.target_h as number;
+              bytes = normalizeToSpec(bytes, cellSize, cellSize);
             }
 
             const { error: uploadErr } = await supabase.storage
@@ -563,7 +605,13 @@ serve(async (req) => {
                   const binaryStr = atob(base64Data);
                   const bytes = new Uint8Array(binaryStr.length);
                   for (let j = 0; j < binaryStr.length; j++) bytes[j] = binaryStr.charCodeAt(j);
-                  await supabase.storage.from("pixel-assets").upload(framePath, bytes, { contentType: mimeType, upsert: false });
+                  let retryBytes = bytes;
+                  if (mimeType === "image/png") {
+                    retryBytes = stripBackground(retryBytes);
+                    const cellSize = spec.target_h as number;
+                    retryBytes = normalizeToSpec(retryBytes, cellSize, cellSize);
+                  }
+                  await supabase.storage.from("pixel-assets").upload(framePath, retryBytes, { contentType: mimeType, upsert: false });
                   const { data: urlData } = supabase.storage.from("pixel-assets").getPublicUrl(framePath);
                   frameUrls[mi] = urlData.publicUrl;
                   break;
@@ -598,9 +646,12 @@ serve(async (req) => {
             clips: spec.tier === "unit"
               ? frameCount === 10
                 ? [
-                    { name: "idle", frames: [0, 1, 2, 3], fps: 5, loop: true },
+                    // A6: canonical 10f mapping = Idle / Walk×3 / Attack×3 / Hit / Death×2
+                    { name: "idle", frames: [0], fps: 4, loop: true },
+                    { name: "walk", frames: [1, 2, 3], fps: 8, loop: true },
                     { name: "attack", frames: [4, 5, 6], fps: 10, loop: false },
-                    { name: "death", frames: [7, 8, 9], fps: 6, loop: false },
+                    { name: "hit", frames: [7], fps: 6, loop: false },
+                    { name: "death", frames: [8, 9], fps: 6, loop: false },
                   ]
                 : frameCount === 5
                 ? [
@@ -698,6 +749,10 @@ serve(async (req) => {
     // Post-process: strip #0C0C14 background to alpha (non-background tiers only)
     if (mimeType === "image/png" && spec.tier !== "background") {
       bytes = stripBackground(bytes);
+      // A1+A4: enforce exact spec dims for pixel tiers (skip ink tiers)
+      if (PIXEL_TIERS.includes(spec.tier as string)) {
+        bytes = normalizeToSpec(bytes, spec.target_w as number, spec.target_h as number);
+      }
     }
 
     const { error: uploadErr } = await supabase.storage
