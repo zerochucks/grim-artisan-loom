@@ -1117,7 +1117,7 @@ const BatchQueuePage = () => {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <p className="font-display text-sm text-primary animate-pulse tracking-widest">LOADING ASSET REGISTRY...</p>
