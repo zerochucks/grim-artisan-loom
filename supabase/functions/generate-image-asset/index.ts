@@ -196,11 +196,13 @@ function buildPromptForTier(
     layoutBlock = `
 ═══ SPRITE SHEET LAYOUT (HARD REQUIREMENTS) ═══
 EXACT canvas size: ${width}×${height} px
-EXACT frames: ${frameCount} frames, single horizontal row, left-to-right
-EXACT cell size: ${cellW}×${frameH} px per frame
-No padding between frames; each cell fully occupied by character
-Do NOT add extra frames; do NOT change aspect ratio
-Keep character anchored: feet locked to consistent pixel row in EVERY frame
+EXACT frames: ${frameCount} frames laid out LEFT-TO-RIGHT in a SINGLE HORIZONTAL ROW (1 row × ${frameCount} columns).
+Do NOT use a 2-row grid. Do NOT use a 5×2 grid. Do NOT use ANY grid layout. STRIP ONLY.
+EXACT cell size: ${cellW}×${frameH} px per frame, uniform spacing.
+No padding between frames; each cell fully occupied by character.
+Character centered in every cell at IDENTICAL scale; feet aligned to the SAME pixel baseline row in EVERY frame; 1–2px transparent padding per cell.
+Do NOT add extra frames; do NOT change aspect ratio.
+NO text, NO frame numbers, NO labels like "Idle1" or "Walk1" inside any cell.
 Frame sequence: Idle1, Walk1, Walk2, Walk3, AttackWindup, AttackSwing, AttackRecover, HitStagger, DeathFall, DeadFlat`;
   } else if (tier === "vfx") {
     const frameCount = Math.round(width / height) || 6;
