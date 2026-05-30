@@ -749,6 +749,10 @@ serve(async (req) => {
     // Post-process: strip #0C0C14 background to alpha (non-background tiers only)
     if (mimeType === "image/png" && spec.tier !== "background") {
       bytes = stripBackground(bytes);
+      // A1+A4: enforce exact spec dims for pixel tiers (skip ink tiers)
+      if (PIXEL_TIERS.includes(spec.tier as string)) {
+        bytes = normalizeToSpec(bytes, spec.target_w as number, spec.target_h as number);
+      }
     }
 
     const { error: uploadErr } = await supabase.storage
