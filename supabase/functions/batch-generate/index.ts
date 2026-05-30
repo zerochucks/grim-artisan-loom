@@ -105,7 +105,7 @@ const MATERIAL_DICT = `Material Dictionary (use ONLY these unless asset explicit
 - Jade/Ledger: #32C882 accents, limited bloom
 - Shadows: deep indigo / near-black — NOT pure black everywhere`;
 
-const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no text overlays, no watermarks, no AI artifacts";
+const NEG_BASE = "no anime, no cartoon, no chibi, no cel-shading, no modern clothing, no sci-fi elements, no neon lighting, no watermarks, no AI artifacts, ABSOLUTELY NO text, NO labels, NO frame numbers, NO captions, NO titles, NO subtitles, NO UI chrome, NO frame borders, NO grid lines, NO arrows, NO callouts, NO signatures anywhere in the image";
 
 const TIER_RULES: Record<string, string> = {
   icon: `DO: 3-value shading (highlight/mid/shadow), simple internal linework, bold readable silhouette, centered, fill frame
