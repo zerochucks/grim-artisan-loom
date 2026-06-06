@@ -129,13 +129,51 @@ function b64encode(bytes: Uint8Array): string {
   return btoa(s);
 }
 
+// ─── BG STRIP: tight #0C0C14 + hue-aware navy/dark-blue key ─────
+// Matches batch-generate's stripBackground. Removes any flat navy fill or
+// blue-tinted dark pixels (background/vignette) while preserving neutral or
+// warm-toned art (robes, leather, skin) because they have b ≈ r.
+function stripBgPixelDataUrl(dataUrl: string): string {
+  try {
+    const b64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const decoded = UPNG.decode(bytes.buffer);
+    const rgba = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
+    const w = decoded.width, h = decoded.height;
+    const BG_R = 0x0C, BG_G = 0x0C, BG_B = 0x14, TOL = 14;
+    let stripped = 0;
+    for (let i = 0; i < rgba.length; i += 4) {
+      if (rgba[i + 3] === 0) continue;
+      const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2];
+      const dr = r - BG_R, dg = g - BG_G, db = b - BG_B;
+      if (dr * dr + dg * dg + db * db <= TOL * TOL) {
+        rgba[i + 3] = 0; stripped++; continue;
+      }
+      const lum = r * 0.299 + g * 0.587 + b * 0.114;
+      const blueBias = b - Math.max(r, g);
+      if (lum < 90 && blueBias >= 6) {
+        rgba[i + 3] = 0; stripped++;
+      }
+    }
+    if (stripped === 0) return dataUrl;
+    console.log(`[bg-strip] Removed ${stripped}/${w * h} pixels (${((stripped / (w * h)) * 100).toFixed(1)}%)`);
+    const enc = UPNG.encode([rgba.buffer], w, h, 0);
+    return `data:image/png;base64,${b64encode(new Uint8Array(enc))}`;
+  } catch (err) {
+    console.error("[bg-strip] failed, returning original:", err);
+    return dataUrl;
+  }
+}
+
 // ─── QA SELF-CHECK (appended to every prompt) ───────────────────
 
 const QA_PIXEL = `Self-check before finalizing:
 ✓ Canvas size matches requested dimensions exactly
 ✓ Frame count matches requested count (if sprite sheet)
 ✓ Single-row horizontal strip (if sprite sheet)
-✓ Background rule followed (transparent or solid #0C0C14)
+✓ Background is FULLY TRANSPARENT (alpha channel, NOT a solid color, NOT navy, NOT dark blue, NOT #0C0C14)
 ✓ NO anti-aliasing — every pixel is a solid color
 ✓ NO alpha bleed — no semi-transparent pixels at edges
 ✓ Silhouette readable at 25% zoom
@@ -444,8 +482,9 @@ serve(async (req) => {
     // ─── A1+A4: enforce exact spec dims + alpha cleanup for pixel tiers ──
     let finalImage = imageBase64;
     if (isPixelTier(tier)) {
-      finalImage = normalizePixelPng(imageBase64, width, height);
-      console.log(`[${tier}] normalized to exact spec ${width}×${height}`);
+      finalImage = stripBgPixelDataUrl(imageBase64);
+      finalImage = normalizePixelPng(finalImage, width, height);
+      console.log(`[${tier}] bg-stripped + normalized to exact spec ${width}×${height}`);
     }
 
     return new Response(JSON.stringify({
