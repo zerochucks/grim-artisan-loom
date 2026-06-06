@@ -2,9 +2,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import UPNG from "https://esm.sh/upng-js@2.1.0";
 
-// ─── BACKGROUND STRIP: replace #0C0C14 pixels with transparent alpha ──
+// ─── BACKGROUND STRIP: tight #0C0C14 key + hue-aware navy/dark-blue key ──
+// The AI often ignores "transparent background" and returns navy/dark-blue fills
+// even on dark-robed subjects. We exploit a hue invariant: the navy backdrop
+// is BLUE-tinted (b > r and b > g), while the art (even dark robes) is neutral
+// or warm (b ≈ r). So we strip any dark + blue-tinted pixel anywhere in the
+// image — this clears flat navy, per-cell navy pockets, and vignette.
 const BG_R = 0x0C, BG_G = 0x0C, BG_B = 0x14;
-const BG_TOLERANCE = 12; // Euclidean distance threshold
+const BG_TOLERANCE = 14;
 
 function stripBackground(pngBytes: Uint8Array): Uint8Array {
   try {
@@ -13,18 +18,29 @@ function stripBackground(pngBytes: Uint8Array): Uint8Array {
     const w = decoded.width, h = decoded.height;
     let stripped = 0;
     for (let i = 0; i < rgba.length; i += 4) {
-      const dr = rgba[i] - BG_R;
-      const dg = rgba[i + 1] - BG_G;
-      const db = rgba[i + 2] - BG_B;
-      const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-      if (dist <= BG_TOLERANCE && rgba[i + 3] > 0) {
-        rgba[i + 3] = 0; // set alpha to 0
+      if (rgba[i + 3] === 0) continue;
+      const r = rgba[i], g = rgba[i + 1], b = rgba[i + 2];
+
+      // Pass 1: tight key on canonical #0C0C14
+      const dr = r - BG_R, dg = g - BG_G, db = b - BG_B;
+      if (dr * dr + dg * dg + db * db <= BG_TOLERANCE * BG_TOLERANCE) {
+        rgba[i + 3] = 0;
+        stripped++;
+        continue;
+      }
+
+      // Pass 2: hue-aware key — blue-tinted dark pixels are background.
+      // Neutral/warm art (robes, leather, skin) is preserved because b ≈ r.
+      const lum = r * 0.299 + g * 0.587 + b * 0.114;
+      const blueBias = b - Math.max(r, g);
+      if (lum < 90 && blueBias >= 6) {
+        rgba[i + 3] = 0;
         stripped++;
       }
     }
-    if (stripped === 0) return pngBytes; // no change needed
+    if (stripped === 0) return pngBytes;
     console.log(`[bg-strip] Removed ${stripped}/${w * h} pixels (${((stripped / (w * h)) * 100).toFixed(1)}%)`);
-    const reEncoded = UPNG.encode([rgba.buffer], w, h, 0); // 0 = lossless
+    const reEncoded = UPNG.encode([rgba.buffer], w, h, 0);
     return new Uint8Array(reEncoded);
   } catch (err) {
     console.error("[bg-strip] Failed, returning original:", err);
