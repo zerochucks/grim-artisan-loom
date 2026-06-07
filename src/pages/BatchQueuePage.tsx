@@ -228,6 +228,21 @@ const BatchQueuePage = () => {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchKey, setSearchKey] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('q') ?? '';
+  });
+  const [searchDebounced, setSearchDebounced] = useState<string>(searchKey);
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(searchKey.trim()), 250);
+    return () => clearTimeout(t);
+  }, [searchKey]);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (searchDebounced) url.searchParams.set('q', searchDebounced);
+    else url.searchParams.delete('q');
+    window.history.replaceState({}, '', url.toString());
+  }, [searchDebounced]);
   const [loading, setLoading] = useState(true);
   const [previewKey, setPreviewKey] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -245,7 +260,7 @@ const BatchQueuePage = () => {
 
   // Persist scroll position per filter combination so reload returns to the same row.
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const scrollKey = `batchQueueScroll:${filterTier}|${filterCategory}|${filterStatus}`;
+  const scrollKey = `batchQueueScroll:${filterTier}|${filterCategory}|${filterStatus}|${searchDebounced}`;
   const pendingScrollRestore = useRef(true);
 
   useEffect(() => {
@@ -291,6 +306,11 @@ const BatchQueuePage = () => {
         query = query.eq('category', filterCategory);
       }
     }
+    if (searchDebounced) {
+      // Escape PostgREST ilike wildcards/commas just enough to avoid breakage.
+      const safe = searchDebounced.replace(/[,()*]/g, '');
+      if (safe) query = query.ilike('asset_key', `%${safe}%`);
+    }
 
     const { data, error, count } = await query
       .order('tier')
@@ -305,7 +325,7 @@ const BatchQueuePage = () => {
     setAssets((data as unknown as SpriteAssetRow[]) || []);
     if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, [filterTier, filterStatus, filterCategory]);
+  }, [filterTier, filterStatus, filterCategory, searchDebounced]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
@@ -1069,6 +1089,25 @@ const BatchQueuePage = () => {
             <option value="all">ALL</option>
             {statuses.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-display text-muted-foreground tracking-widest">SEARCH</span>
+          <input
+            type="text"
+            value={searchKey}
+            onChange={e => setSearchKey(e.target.value)}
+            placeholder="asset_key (e.g. mage)"
+            className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body w-48 placeholder:text-muted-foreground/60"
+          />
+          {searchKey && (
+            <button
+              onClick={() => setSearchKey('')}
+              className="text-[10px] text-muted-foreground hover:text-foreground font-body"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2 ml-4">
