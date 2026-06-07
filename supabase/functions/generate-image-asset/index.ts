@@ -8,14 +8,15 @@ const corsHeaders = {
 
 // ─── TYPES ────────────────────────────────────────────────────────
 
-type AssetTier = "background" | "portrait" | "unit" | "icon" | "tile" | "node" | "ui" | "vfx" | "font" | "logo";
+type AssetTier = "background" | "portrait" | "unit" | "monster" | "icon" | "tile" | "node" | "ui" | "vfx" | "font" | "logo";
 
 // ─── PIPELINE DETECTION ──────────────────────────────────────────
 // Pipeline A = non-pixel (ink-and-gold illustration): background, portrait, logo
 // Pipeline B = pixel art: unit, icon, tile, node, ui, vfx, font
 
-const PIXEL_TIERS: AssetTier[] = ["unit", "icon", "tile", "node", "ui", "vfx", "font"];
+const PIXEL_TIERS: AssetTier[] = ["unit", "monster", "icon", "tile", "node", "ui", "vfx", "font"];
 const INK_TIERS: AssetTier[] = ["background", "portrait", "logo"];
+const COMBAT_TIERS: AssetTier[] = ["unit", "monster"];
 
 function isPixelTier(tier: AssetTier): boolean {
   return PIXEL_TIERS.includes(tier);
@@ -275,6 +276,57 @@ function buildPromptForTier(
   modifierText: string,
   referenceNote: string,
 ): string {
+  // ─── COMBAT SPRITES: single transparent idle pose, 3 golden rules ──
+  if (COMBAT_TIERS.includes(tier)) {
+    const isMonster = tier === "monster";
+    const facing = isMonster ? "LEFT (toward the party)" : "RIGHT";
+    const subjectLabel = isMonster ? "creature" : "character";
+    const poseLine = isMonster
+      ? "menacing idle pose, weight settled, head/eyes tracking the party"
+      : "idle standing pose, weight centered, weapon in hand at rest";
+    const paletteBlock = paletteDescription ? `\n═══ PALETTE ═══\n${paletteDescription}` : "";
+    const modBlock = modifierText ? `\n═══ ADDITIONAL STYLE MODIFIERS ═══\n${modifierText}` : "";
+    return `═══ BRAND ═══
+${BRAND_IDENTITY}
+
+═══ STYLE ═══
+Gritty dark-fantasy pixel art, The Last Spell / Darkest Dungeon register.
+Muted earthy palette, strong readable silhouette, subtle cool rim light on one edge.
+Painterly tonal grouping but visible pixel structure.
+
+═══ THE 3 GOLDEN RULES (NON-NEGOTIABLE) ═══
+1. TRANSPARENT background. Real PNG alpha channel. NO color fill. NO #0C0C14. NO navy. NO dark box. NO checkerboard. NO ground plate. NO drop shadow. The ${subjectLabel} floats on nothing.
+2. ABSOLUTELY NO text — no frame labels (Idle1, Walk1), no captions, no watermark, no letters, no numbers, no signatures, no UI chrome, no borders.
+3. ONE single full-body pose. ONE ${subjectLabel}. ONE PNG. NO sprite sheet. NO multi-frame strip. NO grid of poses.
+
+═══ LAYOUT ═══
+EXACT canvas size: ${width}×${height} px, square.
+Side view, full body, ${subjectLabel} facing ${facing}.
+${poseLine}.
+Centered horizontally, feet near the bottom edge with a small even margin.
+Subject fills ~80% of canvas height so every ${subjectLabel} matches scale.
+
+═══ SUBJECT ═══
+${subject}
+${paletteBlock}
+
+═══ MATERIALS ═══
+${MATERIAL_DICT}
+${modBlock}
+${referenceNote}
+
+═══ NEGATIVE ═══
+${NEG_BASE}, no sprite sheet, no multi-frame strip, no grid layout, no caption band, no frame numbers, no "Idle1" or "Walk1" labels, no solid background, no dark box, no navy fill, no #0C0C14 background, no ground shadow disc, no scenery, no environment behind subject, no anti-aliased blur, ${NEG_NO_TEXT}
+
+═══ QA SELF-CHECK ═══
+✓ Canvas is exactly ${width}×${height} px
+✓ Background is FULLY TRANSPARENT (real alpha channel) — NO color fill, NO #0C0C14, NO navy, NO dark box
+✓ ABSOLUTELY NO text, labels, frame numbers, captions, watermark anywhere
+✓ ONE ${subjectLabel}, ONE pose, ONE PNG — NOT a sprite sheet
+✓ Subject fills ~80% of canvas height, centered, feet near bottom
+✓ Subject faces ${facing}`;
+  }
+
   const isPixel = isPixelTier(tier);
   const header = isPixel ? PIXEL_HEADER : INK_HEADER;
   const tierRule = TIER_RULES[tier] || "";
