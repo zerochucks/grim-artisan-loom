@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { exportClassSystemJSON } from '@/lib/class-system';
 import JSZip from 'jszip';
+import { AssetEditor, type EditableAsset } from '@/components/AssetEditor';
 
 interface SpriteAssetRow {
   id: string;
@@ -234,6 +235,7 @@ const BatchQueuePage = () => {
   });
   const [editingAsset, setEditingAsset] = useState<SpriteAssetRow | null>(null);
   const [editPrompt, setEditPrompt] = useState('');
+  const [paintingAsset, setPaintingAsset] = useState<SpriteAssetRow | null>(null);
   const [variationStrength, setVariationStrength] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
   const [globalTiers, setGlobalTiers] = useState<string[]>([]);
@@ -1237,6 +1239,19 @@ const BatchQueuePage = () => {
                        >
                          ✏️
                        </Button>
+
+                       {/* In-UI edit (manual paint / AI re-render) — only when there's an image */}
+                       {asset.storage_url && (
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           className="h-6 w-6 p-0 text-[9px] text-muted-foreground hover:text-primary"
+                           title="Open in editor (paint or AI re-render)"
+                           onClick={() => setPaintingAsset(asset)}
+                         >
+                           🎨
+                         </Button>
+                       )}
 
                        {/* Generate button */}
                        {(asset.qa_status === 'pending' || asset.qa_status === 'rejected') && (
