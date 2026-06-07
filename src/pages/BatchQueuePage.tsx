@@ -1251,6 +1251,28 @@ const BatchQueuePage = () => {
                          </Button>
                        )}
 
+                       {/* Cancel stuck generation */}
+                       {(asset.qa_status === 'generating' || asset.qa_status === 'queued' || asset.qa_status?.startsWith('retry')) && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           className="h-6 px-2 text-[9px] font-display tracking-wider text-destructive border-destructive/50 hover:bg-destructive/10"
+                           title="Cancel this generation and reset to pending"
+                           onClick={async () => {
+                             if (!confirm(`Cancel generation of ${asset.asset_key}? It will reset to pending.`)) return;
+                             setGenerating(prev => {
+                               const next = new Set(prev);
+                               next.delete(asset.asset_key);
+                               return next;
+                             });
+                             await setQaStatus(asset.asset_key, 'pending');
+                             toast.success(`${asset.asset_key} canceled`);
+                           }}
+                         >
+                           ✕ CANCEL
+                         </Button>
+                       )}
+
                        {/* QA Pass */}
                        {asset.qa_status === 'generated' && (
                          <>
