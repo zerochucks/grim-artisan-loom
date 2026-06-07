@@ -1439,6 +1439,16 @@ const BatchQueuePage = () => {
                 >
                   ✏️ EDIT PROMPT
                 </Button>
+                {previewAsset.storage_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[10px] font-display tracking-wider"
+                    onClick={() => setPaintingAsset(previewAsset)}
+                  >
+                    🎨 EDIT IMAGE
+                  </Button>
+                )}
                 {previewAsset.qa_status === 'generated' && (
                   <>
                     <Button
