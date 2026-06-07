@@ -306,6 +306,11 @@ const BatchQueuePage = () => {
         query = query.eq('category', filterCategory);
       }
     }
+    if (searchDebounced) {
+      // Escape PostgREST ilike wildcards/commas just enough to avoid breakage.
+      const safe = searchDebounced.replace(/[,()*]/g, '');
+      if (safe) query = query.ilike('asset_key', `%${safe}%`);
+    }
 
     const { data, error, count } = await query
       .order('tier')
@@ -320,7 +325,7 @@ const BatchQueuePage = () => {
     setAssets((data as unknown as SpriteAssetRow[]) || []);
     if (count !== null) setTotalCount(count);
     setLoading(false);
-  }, [filterTier, filterStatus, filterCategory]);
+  }, [filterTier, filterStatus, filterCategory, searchDebounced]);
 
   useEffect(() => { fetchAssets(); }, [fetchAssets]);
 
