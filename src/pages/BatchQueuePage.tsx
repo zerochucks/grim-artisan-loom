@@ -1532,6 +1532,22 @@ const BatchQueuePage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Asset Editor (manual paint + AI re-render) */}
+      <AssetEditor
+        open={!!paintingAsset}
+        onClose={() => setPaintingAsset(null)}
+        asset={paintingAsset as EditableAsset | null}
+        onSaved={(newUrl) => {
+          if (paintingAsset) {
+            setAssets(prev => prev.map(a =>
+              a.asset_key === paintingAsset.asset_key
+                ? { ...a, storage_url: newUrl, qa_status: 'generated' }
+                : a,
+            ));
+          }
+        }}
+      />
     </div>
   );
 };
