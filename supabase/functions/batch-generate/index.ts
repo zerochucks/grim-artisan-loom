@@ -93,7 +93,7 @@ const corsHeaders = {
 };
 
 // ─── DUAL-PIPELINE PROMPT SYSTEM ─────────────────────────────────
-const PIXEL_TIERS = ["unit", "icon", "tile", "node", "ui", "vfx", "font"];
+const PIXEL_TIERS = ["unit", "monster", "icon", "tile", "node", "ui", "vfx", "font"];
 const COMBAT_TIERS = ["unit", "monster"]; // single 512×512 transparent idle pose
 
 const BRAND = "Grimdark low-fantasy, morally-gray, gritty, weathered, lived-in. Inspired by Stoneshard, Darkest Dungeon, Kingdom Death. Late medieval / early renaissance. Never clean, never heroic, never sci-fi.";
