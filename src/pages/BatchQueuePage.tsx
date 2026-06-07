@@ -228,6 +228,21 @@ const BatchQueuePage = () => {
   const [filterTier, setFilterTier] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchKey, setSearchKey] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('q') ?? '';
+  });
+  const [searchDebounced, setSearchDebounced] = useState<string>(searchKey);
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(searchKey.trim()), 250);
+    return () => clearTimeout(t);
+  }, [searchKey]);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (searchDebounced) url.searchParams.set('q', searchDebounced);
+    else url.searchParams.delete('q');
+    window.history.replaceState({}, '', url.toString());
+  }, [searchDebounced]);
   const [loading, setLoading] = useState(true);
   const [previewKey, setPreviewKey] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -245,7 +260,7 @@ const BatchQueuePage = () => {
 
   // Persist scroll position per filter combination so reload returns to the same row.
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const scrollKey = `batchQueueScroll:${filterTier}|${filterCategory}|${filterStatus}`;
+  const scrollKey = `batchQueueScroll:${filterTier}|${filterCategory}|${filterStatus}|${searchDebounced}`;
   const pendingScrollRestore = useRef(true);
 
   useEffect(() => {
