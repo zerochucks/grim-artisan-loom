@@ -1090,6 +1090,25 @@ const BatchQueuePage = () => {
             {statuses.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-display text-muted-foreground tracking-widest">SEARCH</span>
+          <input
+            type="text"
+            value={searchKey}
+            onChange={e => setSearchKey(e.target.value)}
+            placeholder="asset_key (e.g. mage)"
+            className="bg-muted border border-border text-foreground text-xs px-2 py-1 font-body w-48 placeholder:text-muted-foreground/60"
+          />
+          {searchKey && (
+            <button
+              onClick={() => setSearchKey('')}
+              className="text-[10px] text-muted-foreground hover:text-foreground font-body"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 ml-4">
           <span className="text-[10px] font-display text-muted-foreground tracking-widest whitespace-nowrap">VARIATION</span>
