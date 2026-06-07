@@ -7,7 +7,7 @@
 
 // ─── TYPES ────────────────────────────────────────────────────────
 
-export type AssetTier = 'background' | 'portrait' | 'unit' | 'icon' | 'tile' | 'node';
+export type AssetTier = 'background' | 'portrait' | 'unit' | 'monster' | 'icon' | 'tile' | 'node';
 export type AnimationState = 'idle' | 'attack' | 'death';
 
 export interface SpriteSpec {
@@ -75,15 +75,22 @@ function makeSpec(
 }
 
 export const SPRITE_SPECS: Record<string, SpriteSpec> = {
-  // ── Units (per-frame: 128×128 cells, 10 frames) ─────────────────
-  unit_fighter:      makeSpec('unit',       'unit_fighter',      1280, 128, 10, 32, 'Sprites/Units'),
-  unit_rogue:        makeSpec('unit',       'unit_rogue',        1280, 128, 10, 32, 'Sprites/Units'),
-  unit_ranger:       makeSpec('unit',       'unit_ranger',       1280, 128, 10, 32, 'Sprites/Units'),
-  unit_mage:         makeSpec('unit',       'unit_mage',         1280, 128, 10, 32, 'Sprites/Units'),
-  unit_cleric:       makeSpec('unit',       'unit_cleric',       1280, 128, 10, 32, 'Sprites/Units'),
-  unit_warden:       makeSpec('unit',       'unit_warden',       1280, 128, 10, 32, 'Sprites/Units'),
-  unit_enemy_basic:  makeSpec('unit',       'unit_enemy_basic',  1280, 128, 10, 32, 'Sprites/Units'),
-  unit_enemy_boss:   makeSpec('unit',       'unit_enemy_boss',   1280, 128, 10, 32, 'Sprites/Units'),
+  // ── Units: single 512×512 transparent idle pose (one PNG per role). ──
+  // The old 10-frame 1280×128 sheets are deprecated. Animation, when wanted,
+  // is composed offline from additional pose PNGs.
+  unit_fighter:      makeSpec('unit', 'unit_fighter',      512, 512, 1, 64, 'Sprites/Units'),
+  unit_rogue:        makeSpec('unit', 'unit_rogue',        512, 512, 1, 64, 'Sprites/Units'),
+  unit_ranger:       makeSpec('unit', 'unit_ranger',       512, 512, 1, 64, 'Sprites/Units'),
+  unit_mage:         makeSpec('unit', 'unit_mage',         512, 512, 1, 64, 'Sprites/Units'),
+  unit_cleric:       makeSpec('unit', 'unit_cleric',       512, 512, 1, 64, 'Sprites/Units'),
+  unit_warden:       makeSpec('unit', 'unit_warden',       512, 512, 1, 64, 'Sprites/Units'),
+  unit_druid:        makeSpec('unit', 'unit_druid',        512, 512, 1, 64, 'Sprites/Units'),
+  unit_shaman:       makeSpec('unit', 'unit_shaman',       512, 512, 1, 64, 'Sprites/Units'),
+  unit_ironshell:    makeSpec('unit', 'unit_ironshell',    512, 512, 1, 64, 'Sprites/Units'),
+  unit_swarmcaller:  makeSpec('unit', 'unit_swarmcaller',  512, 512, 1, 64, 'Sprites/Units'),
+  unit_generalist:   makeSpec('unit', 'unit_generalist',   512, 512, 1, 64, 'Sprites/Units'),
+  unit_enemy_basic:  makeSpec('unit', 'unit_enemy_basic',  512, 512, 1, 64, 'Sprites/Units'),
+  unit_enemy_boss:   makeSpec('unit', 'unit_enemy_boss',   768, 768, 1, 64, 'Sprites/Units'),
 
   // ── Portraits (single frame) ───────────────────────────────────
   portrait_fighter:  makeSpec('portrait',   'portrait_fighter',  48,  64, 1, 32, 'Sprites/Portraits'),

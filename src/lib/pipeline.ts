@@ -449,22 +449,27 @@ export async function processSpriteAsset(
       break;
 
     case 'unit': {
-      // If AI output is multi-row, reorganize into a single horizontal strip
-      const unitSrc = spec.frameCount > 1
-        ? reorganizeToStrip(srcCanvas, spec.frameCount, spec.targetW, spec.targetH)
-        : srcCanvas;
-      // NN downscale if needed, palette snap, outline
-      if (unitSrc.width > spec.targetW * 1.5 || unitSrc.height > spec.targetH * 1.5) {
-        processed = nearestNeighborDownscale(unitSrc, spec.targetW, spec.targetH);
+      // Single 512×512 transparent idle pose (frameCount=1).
+      // Skip palette snap + outline at this resolution: the AI output is
+      // already a painterly silhouette and 24-color snapping crushes it.
+      // Just bilinear-downscale to spec and clean the alpha fringe.
+      if (srcCanvas.width !== spec.targetW || srcCanvas.height !== spec.targetH) {
+        processed = bilinearDownscale(srcCanvas, spec.targetW, spec.targetH);
       } else {
-        processed = cloneCanvas(unitSrc);
+        processed = cloneCanvas(srcCanvas);
       }
-      if (spec.paletteHex.length > 0) {
-        processed = paletteSnap(processed, spec.paletteHex);
-      }
-      processed = cleanInterFrameSmudges(processed, spec.frameCount);
       processed = cleanAlphaFringe(processed);
-      processed = applyOutline(processed, '#0C0C14');
+      break;
+    }
+
+    case 'monster': {
+      // Same handling as a single-pose unit, but facing-left enemy.
+      if (srcCanvas.width !== spec.targetW || srcCanvas.height !== spec.targetH) {
+        processed = bilinearDownscale(srcCanvas, spec.targetW, spec.targetH);
+      } else {
+        processed = cloneCanvas(srcCanvas);
+      }
+      processed = cleanAlphaFringe(processed);
       break;
     }
 

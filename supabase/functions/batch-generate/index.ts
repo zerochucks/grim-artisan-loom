@@ -93,7 +93,8 @@ const corsHeaders = {
 };
 
 // ─── DUAL-PIPELINE PROMPT SYSTEM ─────────────────────────────────
-const PIXEL_TIERS = ["unit", "icon", "tile", "node", "ui", "vfx", "font"];
+const PIXEL_TIERS = ["unit", "monster", "icon", "tile", "node", "ui", "vfx", "font"];
+const COMBAT_TIERS = ["unit", "monster"]; // single 512×512 transparent idle pose
 
 const BRAND = "Grimdark low-fantasy, morally-gray, gritty, weathered, lived-in. Inspired by Stoneshard, Darkest Dungeon, Kingdom Death. Late medieval / early renaissance. Never clean, never heroic, never sci-fi.";
 
@@ -139,6 +140,9 @@ Background: SOLID #0C0C14`,
   unit: `DO: consistent proportions across ALL frames, clear silhouette, root-pin feet to consistent pixel row
 DON'T: vary character size between frames, add extra frames, change aspect ratio, gradients
 Background: TRANSPARENT (alpha channel, no solid fill, no #0C0C14)`,
+  monster: `DO: single menacing idle pose, facing LEFT (toward the party), full body, readable silhouette
+DON'T: multiple frames, sprite sheet, ground shadow, scenery, background fill
+Background: TRANSPARENT (alpha channel, no solid fill, no #0C0C14)`,
   font: `DO: consistent stroke weight, readable at target size, pixel-perfect grid alignment
 DON'T: anti-aliased curves, sub-pixel rendering, variable stroke weight
 Background: SOLID #0C0C14`,
@@ -154,6 +158,13 @@ DON'T: pixel art style, complex gradients that break at small sizes`,
 };
 
 const QA_PIXEL = `Self-check: ✓ canvas size exact ✓ background rule followed ✓ NO anti-aliasing ✓ NO alpha bleed ✓ silhouette readable at 25% zoom ✓ 1px outline present`;
+const QA_COMBAT = `Self-check before finalizing:
+✓ Canvas is exactly the requested size
+✓ Background is FULLY TRANSPARENT (real alpha channel) — NO color fill, NO #0C0C14, NO navy, NO dark box, NO checkerboard
+✓ ABSOLUTELY NO text, labels, frame numbers, captions, watermark, signatures anywhere
+✓ ONE character, ONE single full-body pose — NOT a sprite sheet, NOT multiple frames
+✓ Character fills ~80% of canvas height, centered, feet near the bottom
+✓ Subject faces the correct direction (units RIGHT, monsters LEFT)`;
 const QA_INK = `Self-check: ✓ canvas dimensions match ✓ no characters (backgrounds) ✓ no text/UI ✓ rim light consistent ✓ 4+ tonal bands ✓ room for game UI overlay`;
 
 // ─── FRAME ACTION DEFINITIONS FOR UNITS ──────────────────────────
@@ -265,6 +276,51 @@ function buildPrompt(spec: Record<string, unknown>, referenceNote: string): stri
   const w = spec.target_w as number;
   const h = spec.target_h as number;
   const primaryColor = spec.primary_color as string | null;
+
+  // ─── COMBAT SPRITES (unit / monster): single 512×512 transparent idle pose ──
+  if (COMBAT_TIERS.includes(tier)) {
+    const isMonster = tier === "monster";
+    const facing = isMonster ? "LEFT (toward the party)" : "RIGHT";
+    const subjectLabel = isMonster ? "creature" : "character";
+    const poseLine = isMonster
+      ? "menacing idle pose, weight settled, eyes/head tracking the party"
+      : "idle standing pose, weight centered, weapon in hand at rest";
+    const colorNote = primaryColor ? `Primary accent color: ${primaryColor}.` : "";
+
+    return `═══ BRAND ═══
+${BRAND}
+
+═══ STYLE ═══
+Gritty dark-fantasy pixel art, The Last Spell / Darkest Dungeon register.
+Muted earthy palette, strong readable silhouette, subtle cool rim light on one edge.
+Hand-crafted look — visible pixel structure but not over-noisy. Painterly tonal grouping.
+
+═══ THE 3 GOLDEN RULES (NON-NEGOTIABLE) ═══
+1. TRANSPARENT background. Real PNG alpha channel. NO color fill. NO #0C0C14. NO navy. NO dark box. NO checkerboard. NO ground plate. NO drop shadow. The ${subjectLabel} floats on nothing.
+2. ABSOLUTELY NO text anywhere — no frame labels (Idle1, Walk1), no captions, no watermark, no letters, no numbers, no signatures, no UI chrome, no borders.
+3. ONE single full-body pose. ONE ${subjectLabel}. ONE PNG. NO sprite sheet. NO multi-frame strip. NO grid of poses.
+
+═══ LAYOUT ═══
+EXACT canvas size: ${w}×${h} px, square.
+Side view, full body, ${subjectLabel} facing ${facing}.
+${poseLine}.
+Centered horizontally, feet near the bottom edge with a small even margin.
+Consistent scale: subject fills ~80% of canvas height so every ${subjectLabel} matches.
+
+═══ SUBJECT ═══
+${prompt}
+${colorNote}
+
+═══ MATERIALS ═══
+${MATERIAL_DICT}
+${referenceNote}
+
+═══ NEGATIVE ═══
+${NEG_BASE}, no sprite sheet, no multi-frame strip, no grid layout, no caption band, no frame numbers, no "Idle1" or "Walk1" labels, no solid background, no dark box, no navy fill, no #0C0C14 background, no ground shadow disc, no scenery, no environment behind subject, no ink illustration, no painterly photorealism, no anti-aliased blur
+
+═══ QA SELF-CHECK ═══
+${QA_COMBAT}`;
+  }
 
   const isPixel = PIXEL_TIERS.includes(tier);
   const header = isPixel ? PIXEL_HEADER : INK_HEADER;
